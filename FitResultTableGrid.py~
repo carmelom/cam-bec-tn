@@ -273,7 +273,7 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
                       'G': set(),
                       }
 
-        self.CanHaveAttributes() #TODO: ntig???
+        self.CanHaveAttributes() #TODO: nötig???
 
         #:measurement name
         self.name = ""

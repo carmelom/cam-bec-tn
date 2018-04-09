@@ -3390,8 +3390,8 @@ class ImgAppAui(wx.App):
         wx.PostEvent(self.frame, ReloadImageEvent(filename = None, target = None))
 
     def AcousticSignal(self):
-        pass
-        #self.ding.play()
+        #pass
+        self.ding.play()
 
     def CreateReloadEvent(self):
         self.AcousticSignal()
