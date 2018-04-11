@@ -220,7 +220,7 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
             'Mark',     'bool_custom',      0, 0, '', 
             'Mark2',     'bool_custom',      0, 0, '', 
             'Mark3',     'bool_custom',      0, 0, '', 
-            'user',     'double_empty:5,3', 0, 1, '',  
+            'user',     'double_empty:5.3', 0, 1, '',  
             'user2',    'double_empty:5,3', 0, 1, '',  
             'user3',    'double_empty:5,3', 0, 1, '',  
             'user4',    'double_empty:5,3', 0, 0, '',  
@@ -273,7 +273,7 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
                       'G': set(),
                       }
 
-        self.CanHaveAttributes() #TODO: nötig???
+        self.CanHaveAttributes() #TODO: ntig???
 
         #:measurement name
         self.name = ""

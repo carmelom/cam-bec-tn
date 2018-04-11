@@ -1,4 +1,4 @@
-#!c:\Python27\python.exe
+#!/usr/bin/python
 #-*- coding: latin-1 -*-
 """Main file for camera program."""
 
@@ -19,6 +19,7 @@ from numpy import ma
 #gui
 import wx, wx.aui, wx.grid
 import wx.lib.delayedresult as delayedresult
+
 
 from matplotlib.widgets import Button#, Cursor 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
@@ -3749,7 +3750,7 @@ def test_img_from_disk():
 
 def run_cam():
     gui = ImgAppAui(redirect=False)
-    gui.MainLoop()
+    gui.MainLoop()    
     return gui
 
 """

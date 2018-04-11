@@ -60,6 +60,7 @@ class FloatRenderer(wx.grid.PyGridCellRenderer):
         value = grid.Table.GetValue(row, col)
         empty = grid.Table.IsEmptyCell(row, col)
         if not empty:
+            #print(value)
             s = (self.format%float(value)).lstrip()
         else:
             s = '-'

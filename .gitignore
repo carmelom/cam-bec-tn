@@ -2,9 +2,16 @@
 dist/
 doc/
 
+# img files
+img/test*.sis
+img/test*.npy
+
+# Location-specific settings
+settings.py # see settings.template as a reference
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
+*.py[cod~]
 *$py.class
 
 # C extensions
