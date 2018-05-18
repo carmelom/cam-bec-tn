@@ -79,8 +79,10 @@ def read(filename):
     ls = rawdata[19]
 
     # Reading the images
-    image = rawdata[-width*height:]
-    image.resize(height,width)
+    # image = rawdata[-width*height:]
+    # image.resize(height,width)
+
+    image = np.resize(rawdata[-width*height:], (height,width))
     return image.astype(np.float32)
 
 def OLDread(filename):

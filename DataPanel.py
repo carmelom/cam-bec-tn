@@ -8,6 +8,7 @@ import wx
 #import math
 import pylab, numpy
 import matplotlib
+matplotlib.pyplot.rcParams['axes.grid'] = True
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import StatusBarWx
 from matplotlib.figure import Figure
@@ -200,6 +201,7 @@ class DataPlotPanel(wx.Panel):
                 ax.cam_need_autoscaley = False
                 
             ax.set_picker(True)
+            ax.grid(True)
             self.axs.append(ax)
 
 

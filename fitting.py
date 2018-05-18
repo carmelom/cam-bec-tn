@@ -133,7 +133,7 @@ class NoFit(Fitting):
         background = numpy.array([0.0], dtype = imgtype)
         return [], background, FitParsNoFit(), None
 
-class ImageIntergration(Fitting):
+class ImageIntegration(Fitting):
     """Perform intergration of the picture to evalate parameters.
     @sort: do_fit"""
     
@@ -154,16 +154,12 @@ class ImageIntergration(Fitting):
         ly = roi.ymax-roi.ymin
         lx = roi.xmax-roi.xmin
         
-        imgroi_flt = gaussian_filter(imgroi,2)
-        
-        
-        
         e_x = int(lx*e)
         e_y = int(ly*e)
         msk_img = numpy.ones((ly,lx), dtype=bool)
         
         msk_img[e_y:-e_y,e_x:-e_x] = 0
-        bkd_sample = imgroi_flt[msk_img]
+        bkd_sample = imgroi[msk_img]
         bkd = bkd_sample.mean()
         
         background = numpy.array([bkd], dtype = imgtype)
@@ -186,7 +182,7 @@ class ImageIntergration(Fitting):
                            my])
         
 
-        fitpars = FitParsImageIntergration(fitpar, self.imaging_pars)
+        fitpars = FitParsImageIntegration(fitpar, self.imaging_pars)
         return [], background, fitpars, None
 
 
@@ -4515,12 +4511,12 @@ class FitParsNoFit(FitPars):
         return "no fit"
 
 
-class FitParsImageIntergration(FitPars):
+class FitParsImageIntegration(FitPars):
     """
     Class for storing results of image raw integration
 
     """
-    description = "ImageIntergration"
+    description = "ImageIntegration"
     fitparnames = ['OD', 'mx', 'my', 'N'
                    ]
     fitparunits = ['', 'px', 'px', 'K'
