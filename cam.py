@@ -1,8 +1,15 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 #-*- coding: latin-1 -*-
 """Main file for camera program."""
 
 from __future__ import with_statement
+
+
+
+
+from sys import exit
+
+
 
 import matplotlib
 #matplotib.use('WxAgg')
@@ -974,6 +981,7 @@ class ImgAppAui(wx.App):
     ID_FitShowContours = wx.NewId()
     
     ID_FitNaNone = wx.NewId()
+    ID_NaImageIntegration = wx.NewId()
     ID_FitNaGauss1D = wx.NewId()
     ID_FitNaLorentzGauss1D = wx.NewId()
     ID_FitNaGaussGauss1D = wx.NewId()
@@ -992,6 +1000,7 @@ class ImgAppAui(wx.App):
     ID_FitNaNGauss = wx.NewId()
     
     ID_FitKNone = wx.NewId()
+    ID_KImageIntegration = wx.NewId()
     ID_FitKGauss1D = wx.NewId()
     ID_FitKLorentzGauss1D = wx.NewId()
     ID_FitKGaussGauss1D = wx.NewId()
@@ -1112,27 +1121,34 @@ class ImgAppAui(wx.App):
 
     imaging_parlist = [{'K': imagingpars.ImagingParsHorizontalHRNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
                        {'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsHorizontalHRNa()},
+
                        {'K': imagingpars.ImagingParsAxialNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
                        {'K': imagingpars.ImagingParsAxialNa(), 'Na': imagingpars.ImagingParsHorizontalHRNa()},
                        {'Na': imagingpars.ImagingParsAxialNa(), 'K': imagingpars.ImagingParsHorizontalNa()},
                        {'Na': imagingpars.ImagingParsAxialNa(), 'K': imagingpars.ImagingParsHorizontalHRNa()},
+
                        {'K': imagingpars.ImagingParsCMOS(), 'Na': imagingpars.ImagingParsHorizontalNa()},
                        {'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsCMOS()},
                        
                        {'K': imagingpars.ImagingParsVerticalNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
                        {'Na': imagingpars.ImagingParsVerticalNa(), 'K': imagingpars.ImagingParsHorizontalNa()},
+
+                       {'K': imagingpars.ImagingParsAxialNa(), 'Na': imagingpars.ImagingParsVerticalNa()},
+                       {'K': imagingpars.ImagingParsVerticalNa(), 'Na': imagingpars.ImagingParsAxialNa()},
+
                        {'Na': imagingpars.ImagingParsHorizontalNa(), 'K': imagingpars.ImagingParsHorizontalNa()},
                        {'Na': imagingpars.ImagingParsVerticalNa(), 'K': imagingpars.ImagingParsVerticalNa()},
 
-                       {'K': imagingpars.ImagingParsVerticalK(), 'Na': imagingpars.ImagingParsHorizontalK()},
-                       {'Na': imagingpars.ImagingParsVerticalK(), 'K': imagingpars.ImagingParsHorizontalK()},
-                       {'K': imagingpars.ImagingParsHorizontalK(), 'Na': imagingpars.ImagingParsHorizontalK()},
-                       {'K': imagingpars.ImagingParsVerticalK(), 'Na': imagingpars.ImagingParsVerticalK()},
-                       
-                       {'Na': imagingpars.ImagingParsVerticalNa(), 'K': imagingpars.ImagingParsHorizontalK()},
-                       {'Na': imagingpars.ImagingParsVerticalK(), 'K': imagingpars.ImagingParsHorizontalNa()},
-                       {'K': imagingpars.ImagingParsVerticalNa(), 'Na': imagingpars.ImagingParsHorizontalK()},
-                       {'K': imagingpars.ImagingParsVerticalK(), 'Na': imagingpars.ImagingParsHorizontalNa()}]
+#                       {'K': imagingpars.ImagingParsVerticalK(), 'Na': imagingpars.ImagingParsHorizontalK()},
+#                       {'Na': imagingpars.ImagingParsVerticalK(), 'K': imagingpars.ImagingParsHorizontalK()},
+#                       {'K': imagingpars.ImagingParsHorizontalK(), 'Na': imagingpars.ImagingParsHorizontalK()},
+#                       {'K': imagingpars.ImagingParsVerticalK(), 'Na': imagingpars.ImagingParsVerticalK()},
+#                       
+#                       {'Na': imagingpars.ImagingParsVerticalNa(), 'K': imagingpars.ImagingParsHorizontalK()},
+#                       {'Na': imagingpars.ImagingParsVerticalK(), 'K': imagingpars.ImagingParsHorizontalNa()},
+#                       {'K': imagingpars.ImagingParsVerticalNa(), 'Na': imagingpars.ImagingParsHorizontalK()},
+#                       {'K': imagingpars.ImagingParsVerticalK(), 'Na': imagingpars.ImagingParsHorizontalNa()},
+                        ]
 
 
 #-------------------------
@@ -1763,6 +1779,10 @@ class ImgAppAui(wx.App):
             self.Na.fit = fitting.NoFit(self.imaging_pars['Na'])
             self.Na.update()
             
+        if id in [self.ID_NaImageIntegration]:
+            self.Na.fit = fitting.ImageIntegration(self.imaging_pars['Na'])
+            self.Na.update()
+            
         if id in [self.ID_FitNaGauss1D]:
             self.Na.fit = fitting.Gauss1d(self.imaging_pars['Na'])
             self.Na.update()
@@ -1844,6 +1864,18 @@ class ImgAppAui(wx.App):
         if id in [self.ID_FitKNone]:
             self.K.fit = fitting.NoFit(self.imaging_pars['K'])
             self.K.update()
+            
+        if id in [self.ID_KImageIntegration]:
+            self.K.fit = fitting.ImageIntegration(self.imaging_pars['K'])
+            self.K.update()
+            """
+            try:
+                f = open("test",'w')
+                f.write(self.K.fit[2])
+                f.close()
+            except:
+                exit(0)
+                """
             
         if id in [self.ID_FitKGauss1D]:
             self.K.fit = fitting.Gauss1d(self.imaging_pars['K'])
@@ -2289,6 +2321,11 @@ class ImgAppAui(wx.App):
             "perform no fit for Sodium",
             )
         fit_Na_menu.AppendRadioItem(
+            self.ID_NaImageIntegration,
+            "Na image integration",
+            "intergrate the raw image",
+            )
+        fit_Na_menu.AppendRadioItem(
             self.ID_FitNaGauss1D,
             "Na Gauss fit 1D",
             "perform 2 Gauss 1d fits for Sodium",
@@ -2390,6 +2427,11 @@ class ImgAppAui(wx.App):
             self.ID_FitKNone,
             "K no fit",
             "perform no fit for Sodium",
+            )
+        fit_K_menu.AppendRadioItem(
+            self.ID_KImageIntegration,
+            "K image integration",
+            "intergrate the raw image",
             )
         fit_K_menu.AppendRadioItem(
             self.ID_FitKGauss1D,

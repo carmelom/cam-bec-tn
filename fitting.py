@@ -15,6 +15,7 @@ if use_minpack:
 
 import numpy
 import scipy.special
+from scipy.ndimage import gaussian_filter
 
 import LM
 reload(LM)
@@ -128,8 +129,62 @@ class NoFit(Fitting):
         self.imaging_pars = imaging_pars
 
     def do_fit(self, img, roi):
+        
         background = numpy.array([0.0], dtype = imgtype)
         return [], background, FitParsNoFit(), None
+
+class ImageIntegration(Fitting):
+    """Perform intergration of the picture to evalate parameters.
+    @sort: do_fit"""
+    
+    def __init__(self, imaging_pars=None):
+        self.imaging_pars = imaging_pars
+    
+    def do_fit(self, img, roi):
+
+        imgroi = img[roi.y, roi.x]
+        
+        x = numpy.asarray(roi.xrange_clipped(img), dtype = imgtype)
+        y = numpy.asarray(roi.yrange_clipped(img), dtype = imgtype)
+        x_msh,y_msh = numpy.meshgrid(x,y)
+        
+        # Background
+        
+        e = .1
+        ly = roi.ymax-roi.ymin
+        lx = roi.xmax-roi.xmin
+        
+        e_x = int(lx*e)
+        e_y = int(ly*e)
+        msk_img = numpy.ones((ly,lx), dtype=bool)
+        
+        msk_img[e_y:-e_y,e_x:-e_x] = 0
+        bkd_sample = imgroi[msk_img]
+        bkd = bkd_sample.mean()
+        
+        background = numpy.array([bkd], dtype = imgtype)
+        
+        # Parameters
+        
+        imgfit = imgroi - bkd
+        imgtot = img - bkd
+        
+        Ax = gaussian_filter(imgfit,10).max()
+        
+        img_sum = imgfit.sum()
+        mx = (imgfit*x_msh).sum()/img_sum
+        my = (imgfit*y_msh).sum()/img_sum
+        
+        OD_int = img_sum
+        fitpar = numpy.array([OD_int,
+                           Ax,
+                           mx,
+                           my])
+        
+
+        fitpars = FitParsImageIntegration(fitpar, self.imaging_pars)
+        return [], background, fitpars, None
+
 
 class Gauss1d(Fitting):
     """Perform fit of 2 separate 1d Gaussian to data averaged along orthogonal
@@ -328,8 +383,9 @@ class Gauss1d(Fitting):
         if sx > 3*abs(roi.xmax - roi.xmin) or \
            sy > 3*abs(roi.ymax - roi.ymin):
             fitpars.invalidate()
-
+        
         background = numpy.array([fitpars.offsetx], dtype = imgtype)
+        
         return [imgfitx, imgfity], background, fitpars, None
 
 class LorentzGauss1d(Gauss1d):
@@ -4453,6 +4509,41 @@ class FitParsNoFit(FitPars):
         
     def __str__(self):
         return "no fit"
+
+
+class FitParsImageIntegration(FitPars):
+    """
+    Class for storing results of image raw integration
+
+    """
+    description = "ImageIntegration"
+    fitparnames = ['OD', 'mx', 'my', 'N'
+                   ]
+    fitparunits = ['', 'px', 'px', 'K'
+                   ]
+    def __init__(self, fitpars, imaging_pars):
+        (self.OD_int, self.Ax, self.mx, self.my) = fitpars
+        self.imaging_pars = imaging_pars
+
+    @property
+    def N(self):
+        "atom number in thousand"
+        N = 1e-3*self.OD_int/self.imaging_pars.sigma0*(self.imaging_pars.pixelsize*1e-6)**2
+        return N
+    
+    @property
+    def OD(self):
+        "maximum optical density"
+        return self.Ax
+
+    def __str__(self):
+        s = u"OD: %6.2f \n" \
+            u"mx: %5.1f px\n" \
+            u"my: %5.1f px\n" \
+            u"N : %3.1f k\n" \
+            %(self.OD, self.mx, self.my, self.N)
+        return s
+
 
 class FitParsGauss1d(FitPars):
     """
