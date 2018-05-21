@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!c:/python27/python2.exe
 #-*- coding: latin-1 -*-
 """Main file for camera program."""
 
