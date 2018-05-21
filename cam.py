@@ -1106,7 +1106,13 @@ class ImgAppAui(wx.App):
     #
     
     #other settings
-    imagefilename = settings.imagefile
+    imagefilename = os.path.abspath(settings.imagefile)
+    try: # used to keep compatibility with older settings
+        watchedfiles = [os.path.abspath(f) for f in settings.watchedfiles]
+    except NameError:
+        watchedfiles = [self.imagefilename]
+    
+    # TODO: Deprecated?
     rawimg1filename = settings.rawimage1file
     rawimg2filename = settings.rawimage2file
     rawimg3filename = settings.rawimage3file
@@ -2725,6 +2731,10 @@ class ImgAppAui(wx.App):
         self.frame.Bind(wx.EVT_CHECKBOX,
                         self.OnAutoreloadClicked,
                         id=self.ID_Autoreload)
+                        
+        # Added when changing filewatch
+        self.FileWatcher = filewatch.FileChangeNotifier(self.watchedfiles,
+                                                        self.ConcatenateSis)
 
         # Record data
         self.record_data_button = wx.Button(self.tb, self.ID_RecordData,
@@ -3270,16 +3280,22 @@ class ImgAppAui(wx.App):
         #self.imagefilename
         
         img0 = read(self.imagefilename.replace(".sis","_0.sis"))
+        img0 = img0[img0.shape[0]/2:]
+        h0, w0 = img0.shape
         img1 = read(self.imagefilename.replace(".sis","_1.sis"))
-        h, w = img0.shape
-
-        img=numpy.concatenate((img0[h/2:], img1[h/2:]))
-
-        img.shape=img0.shape
-
-        #img=numpy.concatenate([img0, img1])
+        img1 = img1[img1.shape[0]/2:]
+        h1, w1 = img1.shape
+        print "GOT two pics with shapes\nim0: ", img0.shape, " im1: ", img1.shape
+        newshape = max(h0, h1), max(w0, w1)
+        im_0 = numpy.zeros(newshape, dtype=img0.dtype)
+        im_0[:h0, :w0] = img0
+        im_1 = numpy.zeros(newshape, dtype=img1.dtype)
+        im_1[:h1, :w1] = img1
+        
+        img = numpy.concatenate((im_0, im_1))
                 
         write_raw_image(self.imagefilename, img)
+        self.CreateReloadEvent()
 ##############
 
 
@@ -3300,14 +3316,6 @@ class ImgAppAui(wx.App):
         self.select_measurement("results")
         self.sync_imaging_pars_expansion_time()
         imgK, imgNa = loadimg(self.imagefilename)
-        ############# added 17-12-2012
-        self.ConcatenateSis()
-        self.fileconcatenatethread0 = filewatch.FileChangeNotifier(self.imagefilename.replace(".sis","_0.sis"),
-                                                    callback=self.ConcatenateSis)
-        self.fileconcatenatethread1 = filewatch.FileChangeNotifier(self.imagefilename.replace(".sis","_1.sis"),
-                                                    callback=self.ConcatenateSis)
-        self.fileconcatenatethread0.start()
-        #self.fileconcatenatethread1.start()
         #############
         
         
@@ -3403,13 +3411,9 @@ class ImgAppAui(wx.App):
 
     def OnAutoreloadClicked(self, event):
         if event.IsChecked():
-            #activate automatic reload
-            self.filewatchthread = filewatch.FileChangeNotifier(self.imagefilename,    ############commented on 01-02-2013
-                                                callback=self.CreateReloadEvent)
-            self.filewatchthread.start()
+            self.FileWatcher.setEnabled(True)
         else:
-            self.filewatchthread.keeprunning = False
-            self.filewatchthread.join()
+            self.FileWatcher.setEnabled(False)
             
 
     def OnRecordDataButtonClicked(self, event):
