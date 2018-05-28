@@ -510,6 +510,8 @@ class ImgPanel(wx.Panel):
 
         self.axhprof.autoscale_view(scalex = False, scaley = True)
         self.axvprof.autoscale_view(scalex = True, scaley = False)
+        
+        
 
     def OnEraseBackground(self, event):
         event.Skip()
@@ -822,11 +824,18 @@ class ImgPanel(wx.Panel):
         ODmax = self.fit.imaging_pars.ODmax #TODO: this might fail if
                                             #fit class is changed.
         if ODmax > 0:
-            img = numpy.log((1 - numpy.exp(- ODmax)) / (numpy.exp(- img) - numpy.exp(- ODmax)))
+            #img = numpy.log((1 - numpy.exp(- ODmax)) / (numpy.exp(- img) - numpy.exp(- ODmax)))
+            smooth = self.fit.imaging_pars.ODmax_smooth
+            # maskk = numpy.bitwise_and(scipy.ndimage.filters.gaussian_filter(img, smooth) <= ODmax,
+                                      # numpy.isfinite(img))
+            maskk = scipy.ndimage.filters.gaussian_filter(img, smooth) <= ODmax
+        else:
+            maskk = numpy.isfinite(img)
+            
             #TODO: remove invalid entries
             #TODO: this should not happen here!
         
-        self.img = ma.array(img, mask= ~ numpy.isfinite(img))
+        self.img = ma.array(img, mask=~maskk)
         if ODmax > 0:
             self.img.set_fill_value(ODmax)
         else:
@@ -1125,17 +1134,12 @@ class ImgAppAui(wx.App):
 
 
 
-    imaging_parlist = [{'K': imagingpars.ImagingParsHorizontalHRNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
-                       {'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsHorizontalHRNa()},
+    imaging_parlist = [{'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsCMOS()},
+                       {'K': imagingpars.ImagingParsHorizontalHRNa(), 'Na': imagingpars.ImagingParsCMOS()},
 
                        {'K': imagingpars.ImagingParsAxialNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
-                       {'K': imagingpars.ImagingParsAxialNa(), 'Na': imagingpars.ImagingParsHorizontalHRNa()},
                        {'Na': imagingpars.ImagingParsAxialNa(), 'K': imagingpars.ImagingParsHorizontalNa()},
-                       {'Na': imagingpars.ImagingParsAxialNa(), 'K': imagingpars.ImagingParsHorizontalHRNa()},
-
-                       {'K': imagingpars.ImagingParsCMOS(), 'Na': imagingpars.ImagingParsHorizontalNa()},
-                       {'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsCMOS()},
-                       
+                         
                        {'K': imagingpars.ImagingParsVerticalNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
                        {'Na': imagingpars.ImagingParsVerticalNa(), 'K': imagingpars.ImagingParsHorizontalNa()},
 
@@ -3796,6 +3800,7 @@ def test_img_from_disk():
 
 def run_cam():
     gui = ImgAppAui(redirect=False)
+    gui.ConcatenateSis()
     gui.MainLoop()    
     return gui
 
