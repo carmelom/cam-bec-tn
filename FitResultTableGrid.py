@@ -1037,7 +1037,8 @@ class FitResultDataTableGrid(wx.grid.Grid):
         self.SetSelectionMode(1)
         
         #wx.grid.EVT_GRID_CELL_LEFT_DCLICK(self, self.OnLeftDClick) #open editor with double click
-        wx.grid.EVT_GRID_LABEL_RIGHT_CLICK(self, self.OnLabelRightClick)
+        wx.grid.EVT_GRID_LABEL_RIGHT_CLICK(self, self.RightClick)
+        wx.grid.EVT_GRID_CELL_RIGHT_CLICK(self, self.RightClick)
         #wx.grid.EVT_GRID_LABEL_RIGHT_DCLICK(self, self.OnLabelRightDoubleClick)
 
         #self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
@@ -1082,7 +1083,7 @@ class FitResultDataTableGrid(wx.grid.Grid):
             self.EnableCellEditControl()
 
     
-    def OnLabelRightClick(self, evt):
+    def RightClick(self, evt):
         """right click on row or column header. create popup
         menu. saves current status for menu callbacks in self.act*"""
         
@@ -1132,7 +1133,7 @@ class FitResultDataTableGrid(wx.grid.Grid):
             menu.Destroy()
             
 
-        elif evt.Col<0 and evt.Row>=0: #right click on row label
+        elif evt.Row>=0: #right click on row
             menu = wx.Menu()
             
             miM = menu.Append(self.ID_popup_MaskRow,
@@ -1148,8 +1149,15 @@ class FitResultDataTableGrid(wx.grid.Grid):
                 menu.Append(self.ID_popup_MaskSelection, "Mask Selection")
                 menu.Append(self.ID_popup_UnmaskSelection, "Unmask Selection")
                 menu.Append(self.ID_popup_OmitSelection, "Omit Selection")
-
+            
             self.actRowSelection = self.GetSelectedRows()
+            #sr = self.GetSelectedRows()
+            #tl = self.GetSelectionBlockTopLeft()
+            #tr = self.GetSelectionBlockBottomRight()
+            #if 
+            #self.actRowSelection = range(min(self.GetSelectionBlockTopLeft()[0][0], selectionRow[0]), max(self.GetSelectionBlockBottomRight()[0][0], selectionRow[-1])+1)
+            
+            
             
             self.PopupMenu(menu)
             menu.Destroy()

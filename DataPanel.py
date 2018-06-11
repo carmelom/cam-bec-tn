@@ -9,6 +9,7 @@ import wx
 import pylab, numpy
 import matplotlib
 matplotlib.pyplot.rcParams['axes.grid'] = True
+matplotlib.pyplot.rcParams['image.interpolation'] = 'nearest'
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import StatusBarWx
 from matplotlib.figure import Figure

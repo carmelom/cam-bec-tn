@@ -15,6 +15,7 @@ class ImagingPars(object):
     expansion_time = 0
     mass = 0
     ODmax = 0 #maximum optical density
+    ODmax_smooth = 10
 
     def __str__(self):
         s = "%s, t_exp = %.1fms, OD_max = %.1f"%(
@@ -22,10 +23,26 @@ class ImagingPars(object):
             self.expansion_time,
             self.ODmax)
         return s
+        
+class ImagingParsHorizontalNa(ImagingPars):
+    description = "horiz-Na" #Magnif. last measurement 2018-04-03
+    pixelsize = 4.40/1.3599 #1.362 #1.002  #pixelsize in µm / imaging magnification
+    sigma0 = 1.5/3.14*(589e-9)**2
+    mass = 23.0 * 1.66054e-27
+    palette = "gist_stern"
+    
+    
+class ImagingParsHorizontalHRNa(ImagingPars):
+    description = "horizHR-Na"
+    pixelsize = 4.40/4.20 #1.002  #pixelsize in µm / imaging magnification
+    sigma0 = 1.5/3.14*(589e-9)**2
+    mass = 23.0 * 1.66054e-27
+    palette = "gist_stern"
+    
 
 class ImagingParsCMOS(ImagingPars):
     description = "cmos"
-    pixelsize = 6.50/2.2#0.972  #pixelsize in µm x imaging magnification
+    pixelsize = 6.50/8.5  #pixelsize in µm / imaging magnification
     sigma0 = 1.5/3.14*(589e-9)**2
     mass = 23.0 * 1.66054e-27
     #palette = pylab.cm.gist_stern
@@ -39,14 +56,7 @@ class ImagingParsVerticalNa(ImagingPars):
     #palette = pylab.cm.gist_stern
     palette = "gist_stern"
 
-class ImagingParsAxialHRNa(ImagingPars):
-    description = "axialHR-Na"
-    pixelsize = 4.40/1.99 #0.972  #pixelsize in µm x imaging magnification
-    sigma0 = 1.5/3.14*(589e-9)**2
-    mass = 23.0 * 1.66054e-27
-    #palette = pylab.cm.gist_stern
-    palette = "gist_stern"
-
+    
 class ImagingParsAxialNa(ImagingPars):
     description = "axial-Na" #Magnif. last measurement 2018-04-03
     pixelsize = 4.40/1.053 #1.041 #0.972  #pixelsize in µm / imaging magnification
@@ -55,19 +65,16 @@ class ImagingParsAxialNa(ImagingPars):
     #palette = pylab.cm.gist_stern
     palette = "gist_stern"
     
-class ImagingParsHorizontalHRNa(ImagingPars):
-    description = "horizHR-Na"
-    pixelsize = 4.40/2.042 #1.002  #pixelsize in µm x imaging magnification
+class ImagingParsAxialHRNa(ImagingPars):
+    description = "axialHR-Na"
+    pixelsize = 4.40/1.99 #0.972  #pixelsize in µm x imaging magnification
     sigma0 = 1.5/3.14*(589e-9)**2
     mass = 23.0 * 1.66054e-27
+    #palette = pylab.cm.gist_stern
     palette = "gist_stern"
 
-class ImagingParsHorizontalNa(ImagingPars):
-    description = "horiz-Na" #Magnif. last measurement 2018-04-03
-    pixelsize = 4.40/1.3599 #1.362 #1.002  #pixelsize in µm / imaging magnification
-    sigma0 = 1.5/3.14*(589e-9)**2
-    mass = 23.0 * 1.66054e-27
-    palette = "gist_stern"
+
+    
 
 class ImagingParsVerticalK(ImagingPars):
     description = "vert-K  "
