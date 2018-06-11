@@ -34,16 +34,15 @@ class ImagingParsHorizontalNa(ImagingPars):
     
 class ImagingParsHorizontalHRNa(ImagingPars):
     description = "horizHR-Na"
-    pixelsize = 4.40/4 #1.002  #pixelsize in µm x imaging magnification
+    pixelsize = 4.40/4.20 #1.002  #pixelsize in µm / imaging magnification
     sigma0 = 1.5/3.14*(589e-9)**2
     mass = 23.0 * 1.66054e-27
     palette = "gist_stern"
-    ODmax_smooth = 2
     
 
 class ImagingParsCMOS(ImagingPars):
     description = "cmos"
-    pixelsize = 6.50/8  #pixelsize in µm / imaging magnification
+    pixelsize = 6.50/8.5  #pixelsize in µm / imaging magnification
     sigma0 = 1.5/3.14*(589e-9)**2
     mass = 23.0 * 1.66054e-27
     #palette = pylab.cm.gist_stern

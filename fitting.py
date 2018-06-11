@@ -84,14 +84,17 @@ class Fitting(object):
     rotation_angle = 0.0
     rotation_active = False
     
-    def rotate_coord(self, x, y, mx, my):
+    def rotate_coord(self, x, y, mx, my, angle = None):
+    
+        if angle == None:
+            angle = self.rotation_angle
+    
         if self.rotation_active:
-            a = numpy.cos(self.rotation_angle)
-            b = numpy.sin(self.rotation_angle)
+            a = numpy.cos(angle)
+            b = numpy.sin(angle)
             return (x-mx)*a -(y-my)*b +mx, (x-mx)*b + a*(y-my) +my
         else:
             return x, y
-    
     
     def set_imaging_pars(self, ip):
         self.imaging_pars = ip
@@ -807,9 +810,15 @@ class Gauss2d(Gauss1d):
         @param v0: reference value
         @type v0: 2d ndarray (MxN) or scalar
         """
-        A, mx, my, sx, sy, offs = pars[0:6]
+        
+        if self.rotation_active:
+            A, mx, my, sx, sy, offs, angle = pars[0:7]
+            x, y = self.rotate_coord(x, y, mx, my, angle)
+        else:
+            A, mx, my, sx, sy, offs = pars[0:6]
+            angle = 0.0
 
-        key = (A, mx, my, sx, sy)
+        key = (A, mx, my, sx, sy, angle)
         if self.cache.has_key(key):
             v = self.cache[key]
         else:
@@ -831,38 +840,63 @@ class Gauss2d(Gauss1d):
         """calculate Jacobian for 2d gaussian.
         @rtype: 2d ndarray (see source)
         """
-        A, mx, my, sx, sy, offs = pars[0:6]
 
-        f = self.gauss2d([A, mx, my, sx, sy, 0], x, y)
+        if self.rotation_active:
+            A, mx, my, sx, sy, offs, angle = pars[0:7]
+            x, y = self.rotate_coord(x, y, mx, my, angle)
+            N = 7
+        else:
+            A, mx, my, sx, sy, offs = pars[0:6]
+            angle = 0.0
+            N = 6
 
-        J = numpy.empty(shape = (6,) + f.shape, dtype = imgtype) 
+        f = self.gauss2d([A, mx, my, sx, sy, 0, 0], x, y)
+
+        J = numpy.empty(shape = (N,) + f.shape, dtype = imgtype)
+        
         J[0] = 1.0/A * f
         J[1] = f*(x-mx)/sx**2
         J[2] = f*(y-my)/sy**2
         J[3] = f*(x-mx)**2/sx**3
         J[4] = f*(y-my)**2/sy**3
         J[5] = 1
+        
+        if self.rotation_active:
+            DrotX = self.rotate_coord(x, y, mx, my, angle + numpy.pi/2)
+            J[6] = -(DrotX[0]*J[1] + DrotX[1]*J[2])
 
-        return J.reshape((6,-1))
+        return J.reshape((N,-1))
 
     def fJ(self, pars, x, y, v0=0):
-        A, mx, my, sx, sy, offs = pars[0:6]
+    
+        if self.rotation_active:
+            A, mx, my, sx, sy, offs, angle = pars[0:7]
+            x, y = self.rotate_coord(x, y, mx, my, angle)
+            N = 7
+        else:
+            A, mx, my, sx, sy, offs = pars[0:6]
+            angle = 0.0
+            N = 6
 
         f = A*numpy.exp( - (x-mx)**2 / (2*sx**2) 
                          - (y-my)**2 / (2*sy**2))
         
-        J = numpy.empty(shape = (6,) + f.shape, dtype = imgtype)
+        J = numpy.empty(shape = (N,) + f.shape, dtype = imgtype)
         J[0] = 1.0/A * f
         J[1] = f*(x-mx)/sx**2
         J[2] = f*(y-my)/sy**2
         J[3] = f*(x-mx)**2/sx**3
         J[4] = f*(y-my)**2/sy**3
         J[5] = 1
+        
+        if self.rotation_active:
+            DrotX = self.rotate_coord(x, y, mx, my, angle + numpy.pi/2)
+            J[6] = -(DrotX[0]*J[1] + DrotX[1]*J[2])
 
         f += offs
         f -= v0
         f.shape = (-1,)
-        J.shape = (6,-1)
+        J.shape = (N,-1)
         return f, J
 
     def do_fit(self,img, roi, tot_fit=False):
@@ -893,6 +927,8 @@ class Gauss2d(Gauss1d):
                                 startpary[2], #sigma_y
                                 0 #offset
                                 ])
+        if self.rotation_active:
+            startpar = numpy.append(startpar, self.rotation_angle)
 
         x.shape = (1,-1)
         y.shape = (-1, 1)
@@ -907,12 +943,14 @@ class Gauss2d(Gauss1d):
                         ftol = 1e-6,
                         full_output=1, 
                         )
+            r = imgroi.ravel() - self.gauss2d_flat(fitpar, x, y)
+            J = self.Dgauss2d(fitpar, x, y)
         else:
             imgsel = numpy.ma.getmaskarray(imgroi.ravel())
             fitpar, J, r = LM.LM(self.fJ_masked,
                                  startpar,
                                  args = (x, y, imgroi, imgsel),
-                                 kmax = 30,
+                                 kmax = 50,
                                  eps1 = 1e-6,
                                  eps2 = 1e-6,
                                  verbose = self.verbose,
@@ -931,12 +969,18 @@ class Gauss2d(Gauss1d):
             imgfit_tot = self.gauss2d(fitpar, x_tot , y_tot)
             self.cache.clear()
             
+        if not self.rotation_active:
+            fitpar = numpy.append(fitpar,0.0)
+            fitparerr = numpy.append(fitparerr,0.0)
+        else:
+            fitparerr = numpy.array(fitparerr)
+            
         imgfit = self.gauss2d(fitpar, x, y)
         
         fitpars = FitParsGauss2d(fitpar, self.imaging_pars, fitparerr, sigma)
 
         #validity check
-        A, mx, my, sx, sy, offs = fitpar[0:6]
+        A, mx, my, sx, sy, offs, angle = fitpar[0:7]
         A, sx, sy = abs(A), abs(sx), abs(sy)
         if A<0:
             fitpars.invalidate()
@@ -951,6 +995,7 @@ class Gauss2d(Gauss1d):
         background = numpy.array([fitpars.offset], dtype = imgtype)
         return [imgfit,], background, fitpars, imgfit_tot
 
+    
 class GaussSym2d(Fitting):
     """Perform fit of 2d symmetric Gaussian to data.
     @sort: do_fit, fJgauss1d, gauss2d, gauss2d_flat, fJgauss2d
@@ -1423,7 +1468,6 @@ class BimodalGaussGauss2d(Gauss2d):
         return J.reshape((11, -1))
 
     def fJ(self, pars, x, y, v0 = 0):
-        print "fit pars", pars
         A, mx, my, sx, sy, offs, A1, m1x, m1y, s1x, s1y = pars[0:11]
 
         g = A*numpy.exp(- (x-mx)**2 / (2*sx**2) 
@@ -4081,7 +4125,7 @@ class BoseBimodal2d(Bimodal2d):
         return F, Fd, nz
 
 class ThomasFermi2d(Gauss2d):
-    """Perform fit of 2d Thomas=Fermi distribution to data.
+    """Perform fit of 2d Thomas-Fermi distribution to data.
     @sort: do_fit, TF2d, TF2d_flat, DTF2d, fJ"""
     
         
@@ -4094,11 +4138,15 @@ class ThomasFermi2d(Gauss2d):
 
         @type full_output: bool
         """
-        mx, my, offs, B, rx, ry = pars[0:6]
-        x, y = self.rotate_coord(x, y, mx, my)
         
-
-        key = (mx, my, B, rx, ry)
+        if self.rotation_active:
+            mx, my, offs, B, rx, ry, angle = pars[0:7]
+            x, y = self.rotate_coord(x, y, mx, my, angle)
+        else:
+            mx, my, offs, B, rx, ry = pars[0:6]
+            angle = 0.0
+            
+        key = (mx, my, B, rx, ry, angle)
 
         if self.cache.has_key(key):
             b = self.cache[key]
@@ -4116,13 +4164,48 @@ class ThomasFermi2d(Gauss2d):
         return self.TF2d(pars, x, y, v0).reshape((-1,))
 
     def DTF2d(self, pars, x, y, v=0):
-        mx, my, offs, B, rx, ry = pars[0:6]
+    
+        if self.rotation_active:
+            mx, my, offs, B, rx, ry, angle = pars[0:7]
+            x, y = self.rotate_coord(x, y, mx, my, angle)
+            N = 7
+        else:
+            mx, my, offs, B, rx, ry = pars[0:6]
+            N = 6
 
         b = self.TF2d(pars, x, y, full_output = True)
-        x, y = self.rotate_coord(x, y, mx, my)
         
+        J = numpy.empty(shape = (N,)+ b.shape, dtype = imgtype)
         
-        J = numpy.empty(shape = (6,)+ b.shape, dtype = imgtype)
+        J[0] = ((3.0*B/(rx**2))) * (x-mx) * b 
+        J[1] = ((3.0*B/(ry**2))) * (y-my) * b
+        J[2] = 1
+        J[3] = b**3
+        J[4] = (3.0*B/(rx**3)) * ((x-mx)**2) * b
+        J[5] = (3.0*B/(ry**3)) * ((y-my)**2) * b
+        
+        if self.rotation_active:
+            DrotX = self.rotate_coord(x, y, mx, my, angle + numpy.pi/2)
+            J[6] = -(DrotX[0]*J[0] + DrotX[1]*J[1])
+        
+        return J.reshape((N, -1))
+
+    def fJ(self, pars, x, y, v0 = 0):
+    
+        if self.rotation_active:
+            mx, my, offs, B, rx, ry, angle = pars[0:7]
+            x, y = self.rotate_coord(x, y, mx, my, angle)
+            N = 7
+        else:
+            mx, my, offs, B, rx, ry = pars[0:6]
+            N = 6
+
+        b = (1 - ((x-mx)/rx)**2 - ((y-my)/ry)**2)
+        
+        numpy.maximum(b, 0, b)
+        numpy.sqrt(b,b)
+
+        J = numpy.empty(shape = (N,) + b.shape, dtype = imgtype)
 
         J[0] = ((3.0*B/(rx**2))) * (x-mx) * b 
         J[1] = ((3.0*B/(ry**2))) * (y-my) * b
@@ -4131,32 +4214,17 @@ class ThomasFermi2d(Gauss2d):
         J[4] = (3.0*B/(rx**3)) * ((x-mx)**2) * b
         J[5] = (3.0*B/(ry**3)) * ((y-my)**2) * b
         
-        return J.reshape((6, -1))
-
-    def fJ(self, pars, x, y, v0 = 0):
-        mx, my, offs, B, rx, ry = pars[0:6]
-        x, y = self.rotate_coord(x, y, mx, my)
-        
-        
-        b = (1 - ((x-mx)/rx)**2 - ((y-my)/ry)**2)
-        numpy.maximum(b, 0, b)
-        numpy.sqrt(b,b)
-
-        J = numpy.empty(shape = (6,) + b.shape, dtype = imgtype)
-        
-        J[0] = (3.0*B/(rx**2)) * (x-mx) * b 
-        J[1] = (3.0*B/(ry**2)) * (y-my) * b
-        J[2] = 1
-        J[3] = b**3
-        J[4] = (3.0*B/(rx**3)) * ((x-mx)**2) * b
-        J[5] = (3.0*B/(ry**3)) * ((y-my)**2) * b
+        if self.rotation_active:
+            DrotX = self.rotate_coord(x, y, mx, my, angle + numpy.pi/2)
+            J[6] = -(DrotX[0]*J[0] + DrotX[1]*J[1])
 
         f = B*(b**3) + offs - v0
         f.shape = (-1,)
-        J.shape = (6,-1)
+        J.shape = (N,-1)
         return f, J
 
     def do_fit(self, img, roi,tot_fit=False):
+    
         """
         @rtype: [fit image, fit image gauss only], fit background, FitPars
         """
@@ -4175,17 +4243,19 @@ class ThomasFermi2d(Gauss2d):
         [Ax, mx, sx, ox] = startparx[0:4]
         [Ay, my, sy, oy] = startpary[0:4]
         A = Ay/(numpy.sqrt(2*numpy.pi)*sx)
-
+        
         startpar = [mx,
                     my,
                     0.5*(ox/len(y)+oy/len(x)),
                     A*0.8,
                     sx*0.5,
                     sy*0.5]
+                        
+        if self.rotation_active:
+            startpar = numpy.append(startpar, self.rotation_angle)
 
         x.shape = (1,-1)
         y.shape = (-1, 1)
-
         if use_minpack:
             fitpar, cov, infodict, mesg, ier = \
                     leastsq(self.TF2d_flat,
@@ -4196,12 +4266,14 @@ class ThomasFermi2d(Gauss2d):
                             ftol = 1e-6,
                             full_output = 1,
                             )
+            r = imgroi.ravel() - self.TF2d_flat(fitpar, x, y)
+            J = self.DTF2d(fitpar, x, y)
         else:
             imgsel = numpy.ma.getmaskarray(imgroi.ravel())
             fitpar, J, r = LM.LM(self.fJ_masked,
                                  startpar,
                                  args = (x, y, imgroi, imgsel),
-                                 kmax = 30,
+                                 kmax = 50,
                                  eps1 = 1e-6,
                                  eps2 = 1e-6,
                                  verbose = self.verbose,
@@ -4219,13 +4291,14 @@ class ThomasFermi2d(Gauss2d):
             self.cache.clear()
             imgfit_tot = self.TF2d(fitpar, x_tot , y_tot)
             self.cache.clear()
-            
+        if not self.rotation_active:
+            fitpar = numpy.append(fitpar,0.0)
+            fitparerr = numpy.append(fitparerr,0.0)
+        else:
+            fitparerr = numpy.array(fitparerr)
         fitpars = FitParsTF2d(fitpar, self.imaging_pars, fitparerr, sigma)
         background = numpy.array([fitpars.offset], dtype = imgtype)
-        
         return [imgfit,], background, fitpars, imgfit_tot
-
-
 
 
 class ThomasFermiSlice(ThomasFermi2d):
@@ -4745,13 +4818,15 @@ class FitParsGauss2d(FitPars):
                    'my', 'myerr', 
                    'T', 
                    'N', 'Nth', 'Nerr', 
-                   'sigma'
+                   'sigma',
+                   'angle',
                    ]
     fitparunits = ['', ''
                    'um', 'um', 'um', 'um', 
                    'px', 'px', 'px', 'px', 
                    'uK', 
                    'K', 'K', 'K',
+                   '',
                    '',
                    ]
 
@@ -4771,14 +4846,16 @@ class FitParsGauss2d(FitPars):
          self.my,
          self.sxpx,
          self.sypx,
-         self.offset) = fitpars[0:6]
+         self.offset,
+         self.angle) = fitpars[0:7]
 
         (self.Aerr,
          self.mxerr,
          self.myerr,
          self.sxpxerr,
          self.sypxerr,
-         self.offseterr) = fitparerr[0:6]
+         self.offseterr,
+         self.angleerr) = fitparerr[0:7]
 
         self.sigma = sigma
         self.valid = True
@@ -4860,6 +4937,8 @@ class FitParsGauss2d(FitPars):
             u"     ±%3.2f\n" \
             u"my: %5.1f px\n" \
             u"     ±%3.2f\n"  \
+            u"ang: %3.2f\n" \
+            u"     ±%2.2f\n"  \
             u"sx: %5.1f um\n" \
             u"     ±%3.2f\n" \
             u"sy: %5.1f um\n" \
@@ -4871,6 +4950,7 @@ class FitParsGauss2d(FitPars):
             %(self.OD, self.ODerr,
               self.mx, self.mxerr,
               self.my, self.myerr,
+              self.angle, self.angleerr,
               self.sx, self.sxerr,
               self.sy, self.syerr,
               self.T, self.Terr,
@@ -5795,7 +5875,7 @@ class FitParsBoseBimodal2d(FitParsBimodal2d):
 
 
 class FitParsTF2d(FitPars):
-    "Class for storing results of fit of 2d bimodal distribution to data"
+    "Class for storing results of fit of 2d Thomas-Fermi distribution to data"
 
     description = "Thomas-Fermi2d"
 
@@ -5806,19 +5886,21 @@ class FitParsTF2d(FitPars):
                    'ry', 'ryerr',
                    'Nbec',
                    'OD', 'ODerr',
-                   'sigma',]
+                   'sigma',
+                   'angle', 'angleerr',]
 
     fitparunits = ['10^3','10^3',
                    'px', 'px', 'px', 'px',
                    'um', 'um', 'um', 'um',
                    '10^3',
                    '', '',
-                   '',]
+                   '',
+                   '','',]
 
-    def __init__(self, fitpars, imaging_pars, fitparerr = numpy.zeros(6), sigma = 0.0):
-        (self.mx, self.my, self.offset, self.B, self.rxpx, self.rypx) = fitpars[0:6]
+    def __init__(self, fitpars, imaging_pars, fitparerr = numpy.zeros(7), sigma = 0.0):
+        (self.mx, self.my, self.offset, self.B, self.rxpx, self.rypx, self.angle) = fitpars[0:7]
         (self.mxerr, self.myerr, self.offseterr,
-         self.Berr, self.rxpxerr, self.rypxerr) = fitparerr[0:6]
+         self.Berr, self.rxpxerr, self.rypxerr, self.angleerr) = fitparerr[0:7]
 
         self.sigma = sigma
         self.valid=True
@@ -5873,16 +5955,19 @@ class FitParsTF2d(FitPars):
         s = u"OD:%3.2f ±%3.2f\n"  \
             u"mx:%5.1f px ±%3.2f\n" \
             u"my:%5.1f px ±%3.2f\n" \
+            u"ang:%3.2f ± %2.2f\n" \
             u"rx:%5.1f um ±%3.2f\n" \
             u"ry:%5.1f um ±%3.2f\n" \
             u"Ntf:%3.0f k" \
             %(self.B, self.Berr,
               self.mx, self.mxerr,
               self.my, self.myerr,
+              self.angle, self.angleerr,
               self.rx, self.rxerr,
               self.ry, self.ryerr,
               self.Nbec)
         return s
+
 
 
 class FitParsSV(FitParsTF2d):

@@ -105,7 +105,7 @@ def fitparerror(fitpar, J, res):
     """
     import scipy.stats
     
-    alpha = 0.05 #confidence level 95% for alpha = 0.05, 2sigma confidence limit
+    alpha = 0.317 #confidence level 68% for 2sigma confidence limit
     
     N = max(J.shape) #number of points
     m = len(fitpar) #number of parameters
@@ -115,7 +115,7 @@ def fitparerror(fitpar, J, res):
     sigma = numpy.sqrt(rnorm/(N - m)) # estimated standard deviation
     
     diagonale = numpy.diagonal( numpy.linalg.inv(numpy.inner(J,J)))
-    parerr = numpy.sqrt(diagonale) * sigma * scipy.stats.t.ppf(1-alpha/2, N-m);
+    parerr = numpy.sqrt(numpy.abs(diagonale)) * sigma * scipy.stats.t.ppf(1-alpha/2, N-m);
     parerrrel = parerr/fitpar #relative error
     
     return parerr, sigma

@@ -63,7 +63,7 @@ class FileChangeNotifier():
             print files
 
         def on_modified(self, event):
-            #            print event
+            print event, event.src_path
             try:
                 i = self.monitoredfiles.index(event.src_path)
                 self.hasBeenUpdated[i] = True

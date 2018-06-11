@@ -12,6 +12,9 @@ from sys import exit
 
 
 import matplotlib
+import matplotlib.pyplot as plt
+plt.rcParams['axes.grid'] = True
+plt.rcParams['image.interpolation'] = 'nearest'
 #matplotib.use('WxAgg')
 
 import os, time, shutil, pickle, re, copy
@@ -734,6 +737,17 @@ class ImgPanel(wx.Panel):
                                linewidths = 1.0)#
                     self.hcontours = cs.collections
 
+                elif isinstance(self.fitpars, fitting.FitParsTF2d):
+                    imgfitbec = self.imgfit[0] - self.img_background
+                    cs = self.aximg.contour(self.roi.xrange_clipped(self.img),
+                               self.roi.yrange_clipped(self.img),
+                               imgfitbec,
+                               [0.05*self.fitpars.OD],
+                               colors = 'w',
+                               alpha = 0.5,
+                               linewidths = 1.0)#
+                    self.hcontours = cs.collections
+                    
                 self.aximg.set_xlim(xlim)
                 self.aximg.set_ylim(ylim)
 
