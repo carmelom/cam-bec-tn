@@ -11,6 +11,7 @@ import wx.aui
 import numpy
 
 from observer import Subject, changes_state
+from settings import columnsDataPanelFile
 import gridtypes
 import dynamic_expressions
 
@@ -18,6 +19,13 @@ import functools
 import re
 import types
 from custom_events import ReloadImageEvent
+
+
+def importColumnsLabelsDataPanel():
+    extStr = lambda s: s[1:-1]
+    converters = {0:extStr, 1:extStr, 2:float, 3:float, 4:extStr}
+    return numpy.loadtxt(columnsDataPanelFile, delimiter=';', dtype=object, converters = converters)
+
 
 class DynamicExpressionDialog(wx.Dialog):
     """
@@ -90,146 +98,9 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
         #initialize fields
 
         #NOTE: if columns added, perhaps it's necessary to change fitpar
-        #below
-        _columns = numpy.array([
-            #name       type          dynamic show
-            'FileID',   'long',             0, 1, '',  #0
-            'Filename', 'string',           0, 0, '',  
-            'Timestamp', 'string',           0, 1, '',  
-            'N Na',      'double_empty:4,1', 0, 1, 'Na', 
-            'Nerr Na',   'double_empty:4,2', 0, 0, 'Na', 
-            'Nth Na',    'double_empty:4,1', 0, 0, 'Na', 
-            'Nbec Na',   'double_empty:4,1', 0, 0, 'Na', #5 
-            'N0 Na',   'double_empty:4,1', 0, 0, 'Na',
-            'N1 Na',   'double_empty:4,1', 0, 0, 'Na', 
-            'N2 Na',   'double_empty:4,1', 0, 0, 'Na', 
-            'N3 Na',   'double_empty:4,1', 0, 0, 'Na',
-            'N4 Na',   'double_empty:4,1', 0, 0, 'Na', #10
-            'N5 Na',   'double_empty:4,1', 0, 0, 'Na', 
-            'OD Na',     'double_empty:4,1', 0, 1, 'Na', 
-            'sx Na',     'double_empty:4,1', 0, 1, 'Na', 
-            'sxerr Na',  'double_empty:4,2', 0, 0, 'Na', 
-            'sy Na',     'double_empty:4,1', 0, 1, 'Na', #15
-            'syerr Na',  'double_empty:4,2', 0, 0, 'Na', 
-            's1x Na',    'double_empty:4,1', 0, 0, 'Na',
-            's1xerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            's1y Na',    'double_empty:4,1', 0, 0, 'Na',
-            's1yerr Na', 'double_empty:4,2', 0, 0, 'Na', #20
-            's2x Na',    'double_empty:4,1', 0, 0, 'Na',
-            's2xerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            's2y Na',    'double_empty:4,1', 0, 0, 'Na',
-            's2yerr Na', 'double_empty:4,2', 0, 0, 'Na', 
-            'rx Na',     'double_empty:4,1', 0, 1, 'Na', #25
-            'rxerr Na',  'double_empty:4,2', 0, 0, 'Na', 
-            'ry Na',     'double_empty:4,1', 0, 1, 'Na', 
-            'ryerr Na',  'double_empty:4,2', 0, 0, 'Na', 
-            'mx Na',     'double_empty:4,1', 0, 1, 'Na', 
-            'mxerr Na',  'double_empty:4,2', 0, 0, 'Na', #30 
-            'my Na',     'double_empty:4,1', 0, 1, 'Na', 
-            'myerr Na',  'double_empty:4,2', 0, 0, 'Na', 
-            'm1x Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm1xerr Na', 'double_empty:4,2', 0, 0, 'Na', 
-            'm1y Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm1yerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            'm2x Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm2xerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            'm2y Na',    'double_empty:4,1', 0, 0, 'Na', 
-            'm2yerr Na', 'double_empty:4,2', 0, 0, 'Na', #40
-            'm3x Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm3xerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            'm3y Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm3yerr Na', 'double_empty:4,2', 0, 0, 'Na', 
-            'm4x Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm4xerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            'm4y Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm4yerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            'm5x Na',    'double_empty:4,1', 0, 0, 'Na', 
-            'm5xerr Na', 'double_empty:4,2', 0, 0, 'Na', #50
-            'm5y Na',    'double_empty:4,1', 0, 0, 'Na',
-            'm5yerr Na', 'double_empty:4,2', 0, 0, 'Na',
-            'T Na',      'double_empty:4,3', 0, 1, 'Na', 
-            'Terr Na',   'double_empty:4,3', 0, 0, 'Na',
-            'T1 Na',      'double_empty:4,3', 0, 0, 'Na',
-            'T1err Na',   'double_empty:4,3', 0, 0, 'Na', 
-            'sigma Na',  'double_empty:4,3', 0, 0, 'Na',
-            'params Na', 'string',           0, 0, 'Na', 
-            'resid Na','double_empty:6,4',           0, 0, 'Na',
-            'N K',     'double_empty:4,1', 0, 1, 'K', 
-            'Nerr K',  'double_empty:4,2', 0, 0, 'K', #60
-            'Nth K',   'double_empty:4,1', 0, 0, 'K',
-            'Nbec K',  'double_empty:4,1', 0, 0, 'K',
-            'N0 K',   'double_empty:4,1', 0, 0, 'K',
-            'N1 K',   'double_empty:4,1', 0, 0, 'K', 
-            'N2 K',   'double_empty:4,1', 0, 0, 'K', 
-            'N3 K',   'double_empty:4,1', 0, 0, 'K',
-            'N4 K',   'double_empty:4,1', 0, 0, 'K', 
-            'N5 K',   'double_empty:4,1', 0, 0, 'K', 
-            'OD K',    'double_empty:4,1', 0, 1, 'K',
-            'ODerr K', 'double_empty:4,1', 0, 0, 'K', #70
-            'sx K',    'double_empty:4,1', 0, 1, 'K',
-            'sxerr K', 'double_empty:4,2', 0, 0, 'K',
-            'sy K',    'double_empty:4,1', 0, 1, 'K',
-            'syerr K', 'double_empty:4,2', 0, 0, 'K', 
-            's1x K',    'double_empty:4,1', 0, 0, 'K',
-            's1xerr K', 'double_empty:4,2', 0, 0, 'K',
-            's1y K',    'double_empty:4,1', 0, 0, 'K',
-            's1yerr K', 'double_empty:4,2', 0, 0, 'K',
-            's2x K',    'double_empty:4,1', 0, 0, 'K', 
-            's2xerr K', 'double_empty:4,2', 0, 0, 'K', #80
-            's2y K',    'double_empty:4,1', 0, 0, 'K',
-            's2yerr K', 'double_empty:4,2', 0, 0, 'K',
-            'rx K',    'double_empty:4,1', 0, 1, 'K',
-            'rxerr K', 'double_empty:4,2', 0, 0, 'K', 
-            'ry K',    'double_empty:4,1', 0, 1, 'K',
-            'ryerr K', 'double_empty:4,2', 0, 0, 'K',
-            'mx K',    'double_empty:4,1', 0, 1, 'K',
-            'mxerr K', 'double_empty:4,2', 0, 0, 'K',
-            'my K',    'double_empty:4,1', 0, 1, 'K', 
-            'myerr K', 'double_empty:4,2', 0, 0, 'K', #90
-            'm1x K',    'double_empty:4,1', 0, 0, 'K',
-            'm1xerr K', 'double_empty:4,2', 0, 0, 'K',
-            'm1y K',    'double_empty:4,1', 0, 0, 'K',
-            'm1yerr K', 'double_empty:4,2', 0, 0, 'K', 
-            'm2x K',    'double_empty:4,1', 0, 0, 'K',
-            'm2xerr K', 'double_empty:4,2', 0, 0, 'K',
-            'm2y K',    'double_empty:4,1', 0, 0, 'K',
-            'm2yerr K', 'double_empty:4,2', 0, 0, 'K',
-            'm3x K',    'double_empty:4,1', 0, 0, 'K', 
-            'm3xerr K', 'double_empty:4,2', 0, 0, 'K', #100
-            'm3y K',    'double_empty:4,1', 0, 0, 'K',
-            'm3yerr K', 'double_empty:4,2', 0, 0, 'K',
-            'm4x K',    'double_empty:4,1', 0, 0, 'K',
-            'm4xerr K', 'double_empty:4,2', 0, 0, 'K', 
-            'm4y K',    'double_empty:4,1', 0, 0, 'K',
-            'm4yerr K', 'double_empty:4,2', 0, 0, 'K',
-            'm5x K',    'double_empty:4,1', 0, 0, 'K',
-            'm5xerr K', 'double_empty:4,2', 0, 0, 'K',
-            'm5y K',    'double_empty:4,1', 0, 0, 'K', 
-            'm5yerr K', 'double_empty:4,2', 0, 0, 'K', #110
-            'T K',     'double_empty:4,3', 0, 1, 'K',
-            'Terr K',  'double_empty:4,3', 0, 0, 'K',
-            'T1 K',     'double_empty:4,3', 0, 0, 'K',
-            'T1err K',  'double_empty:4,3', 0, 0, 'K', #110
-            'sigma K', 'double_empty:4,3', 0, 0, 'K', 
-            'params K','string',           0, 0, 'K',
-            'resid K','double_empty:6,4',           0, 0, 'K',
-            'dynamic',  'double_empty:5,3', 1, 1, '',  
-            'dynamic 2','double_empty:5,3', 1, 1, '',  
-            'dynamic 3','double_empty:5,3', 1, 0, '', 
-            'dynamic 4','double_empty:5,3', 1, 0, '', #120
-            'Mark',     'bool_custom',      0, 0, '', 
-            'Mark2',     'bool_custom',      0, 0, '', 
-            'Mark3',     'bool_custom',      0, 0, '', 
-            'user',     'double_empty:5,3', 0, 1, '',  
-            'user2',    'double_empty:5,3', 0, 1, '',  
-            'user3',    'double_empty:5,3', 0, 1, '',  
-            'user4',    'double_empty:5,3', 0, 0, '',  
-            'user5',    'double_empty:5,3', 0, 0, '',  
-            'Omit',     'bool_custom',      0, 1, '', 
-            'Remark',   'string',           0, 1, '', 
-            ], dtype = numpy.object)
-        _columns.shape = (-1, 5)
-
+        
+        _columns = importColumnsLabelsDataPanel()
+        
         self.colLabels = _columns[:,0] #:column labels
         self.dataTypes = _columns[:,1] #:data types
 
@@ -554,38 +425,38 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
 
         #color marks
         if self.colsel[col] in self.marks['X']:
-            attr.SetBackgroundColour(wx.Color(255, 230, 230))
+            attr.SetBackgroundColour(wx.Colour(255, 230, 230))
         elif self.colsel[col] in self.marks['Y1']:
-            attr.SetBackgroundColour(wx.Color(255, 255, 205))
+            attr.SetBackgroundColour(wx.Colour(255, 255, 205))
         elif self.colsel[col] in self.marks['Y2']:
-            attr.SetBackgroundColour(wx.Color(255, 255, 155))
+            attr.SetBackgroundColour(wx.Colour(255, 255, 155))
         elif self.colsel[col] in self.marks['G']:
-            attr.SetBackgroundColour(wx.Color(155, 255, 155))
+            attr.SetBackgroundColour(wx.Colour(155, 255, 155))
 
         #color dynamic columns
         if self.colsel[col] in self.dynamic_cols:
-            attr.SetBackgroundColour(wx.Color(200, 200, 200))
+            attr.SetBackgroundColour(wx.Colour(200, 200, 200))
 
         #color last rows
         maxRows = self.GetNumberRows()
         if self.active:
             if maxRows - row == 1: #last row
-                attr.SetBackgroundColour(wx.Color(255, 230, 230))
+                attr.SetBackgroundColour(wx.Colour(255, 230, 230))
             elif maxRows - row == 2: #second to last row
-                attr.SetBackgroundColour(wx.Color(255, 255, 205))
+                attr.SetBackgroundColour(wx.Colour(255, 255, 205))
             elif maxRows - row == 3:
                 if self.record:
-                    attr.SetBackgroundColour(wx.Color(200, 255, 200))
+                    attr.SetBackgroundColour(wx.Colour(200, 255, 200))
                 else:
-                    attr.SetBackgroundColour(wx.Color(255, 100, 100))
+                    attr.SetBackgroundColour(wx.Colour(255, 100, 100))
         else:
             if maxRows - row <= 2:
-                attr.SetBackgroundColour(wx.Color(127, 127, 127))
+                attr.SetBackgroundColour(wx.Colour(127, 127, 127))
         
         ###print row, len(self.rowmask)
         if len(self.rowmask)>0:
             if self.rowmask[row]:
-                attr.SetTextColour(wx.Color(0,0,255))
+                attr.SetTextColour(wx.Colour(0,0,255))
             
         return attr
 
@@ -992,7 +863,7 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
         for mark, colnames in m['marks'].iteritems():
             self.marks[mark] = set([self.colname_to_raw(name) for name in colnames])
 
-                
+
 class FitResultDataTableGrid(wx.grid.Grid):
 
     ID_popup_MaskRow         = wx.NewId()
@@ -1037,8 +908,7 @@ class FitResultDataTableGrid(wx.grid.Grid):
         self.SetSelectionMode(1)
         
         #wx.grid.EVT_GRID_CELL_LEFT_DCLICK(self, self.OnLeftDClick) #open editor with double click
-        wx.grid.EVT_GRID_LABEL_RIGHT_CLICK(self, self.RightClick)
-        wx.grid.EVT_GRID_CELL_RIGHT_CLICK(self, self.RightClick)
+        wx.grid.EVT_GRID_LABEL_RIGHT_CLICK(self, self.OnLabelRightClick)
         #wx.grid.EVT_GRID_LABEL_RIGHT_DCLICK(self, self.OnLabelRightDoubleClick)
 
         #self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
@@ -1083,7 +953,7 @@ class FitResultDataTableGrid(wx.grid.Grid):
             self.EnableCellEditControl()
 
     
-    def RightClick(self, evt):
+    def OnLabelRightClick(self, evt):
         """right click on row or column header. create popup
         menu. saves current status for menu callbacks in self.act*"""
         
@@ -1133,7 +1003,7 @@ class FitResultDataTableGrid(wx.grid.Grid):
             menu.Destroy()
             
 
-        elif evt.Row>=0: #right click on row
+        elif evt.Col<0 and evt.Row>=0: #right click on row label
             menu = wx.Menu()
             
             miM = menu.Append(self.ID_popup_MaskRow,
@@ -1149,15 +1019,8 @@ class FitResultDataTableGrid(wx.grid.Grid):
                 menu.Append(self.ID_popup_MaskSelection, "Mask Selection")
                 menu.Append(self.ID_popup_UnmaskSelection, "Unmask Selection")
                 menu.Append(self.ID_popup_OmitSelection, "Omit Selection")
-            
+
             self.actRowSelection = self.GetSelectedRows()
-            #sr = self.GetSelectedRows()
-            #tl = self.GetSelectionBlockTopLeft()
-            #tr = self.GetSelectionBlockBottomRight()
-            #if 
-            #self.actRowSelection = range(min(self.GetSelectionBlockTopLeft()[0][0], selectionRow[0]), max(self.GetSelectionBlockBottomRight()[0][0], selectionRow[-1])+1)
-            
-            
             
             self.PopupMenu(menu)
             menu.Destroy()
@@ -1359,7 +1222,7 @@ class FitResultDataTableGrid(wx.grid.Grid):
         self.Refresh()
         self.Table.update_observers()
         
-
+"""
 class GridPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(
@@ -1370,7 +1233,7 @@ class GridPanel(wx.Panel):
         bs = wx.BoxSizer(wx.VERTICAL)
         bs.Add(self.grid,1, wx.GROW)
         self.SetSizer(bs)
-
+"""
 
 class TabbedGridPanel(wx.Panel):
     def __init__(self, parent):
@@ -1410,6 +1273,9 @@ class TabbedGridPanel(wx.Panel):
     def grid(self):
         pageid = self.notebook.GetSelection()
         return self.pages[pageid]
+    
+    def GetFitResultDataTableGrid(self):
+        return self.pages[self.notebook.GetPageIndex(self)]
     
 class TestFrame(wx.Frame):
     def __init__(self, parent):

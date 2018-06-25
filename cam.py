@@ -30,6 +30,8 @@ from numpy import ma
 import wx, wx.aui, wx.grid
 import wx.lib.delayedresult as delayedresult
 
+if not wx.version()[:3] == "3.0":  
+    raise Exception("Version of wx should be 3.0. WxPython 2.8 and 4.0 are not compatible")
 
 from matplotlib.widgets import Button#, Cursor 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
@@ -1150,6 +1152,7 @@ class ImgAppAui(wx.App):
 
     imaging_parlist = [{'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsCMOS()},
                        {'K': imagingpars.ImagingParsHorizontalHRNa(), 'Na': imagingpars.ImagingParsCMOS()},
+                       {'K': imagingpars.ImagingParsHorizontalHRNa() , 'Na': imagingpars.ImagingParsAxialNa()},
 
                        {'K': imagingpars.ImagingParsAxialNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
                        {'Na': imagingpars.ImagingParsAxialNa(), 'K': imagingpars.ImagingParsHorizontalNa()},
@@ -2209,7 +2212,7 @@ class ImgAppAui(wx.App):
             shutil.copy2(self.rawimg2filename, rawimg2savefilenamefull) 
             shutil.copy2(self.rawimg3filename, rawimg3savefilenamefull)
 
-        self.savebutton.SetBackgroundColour(wx.NamedColor("GREEN"))
+        self.savebutton.SetBackgroundColour(wx.NamedColour("GREEN"))
         self.savebutton.Refresh()
 
         #self.saved_image_name.SetLabel(imagesavefilename)
@@ -3367,7 +3370,7 @@ class ImgAppAui(wx.App):
             
         self.results.activate() #activate results table on reload
         self.load_image(filename, event.target)
-        self.savebutton.SetBackgroundColour(wx.NamedColor("RED"))
+        self.savebutton.SetBackgroundColour(wx.NamedColour("RED"))
         self.savebutton.Refresh() #necessary?
         
         #self.saved_image_name.SetLabel('image not saved') #TODO: ??
@@ -3436,13 +3439,13 @@ class ImgAppAui(wx.App):
 
     def OnRecordDataButtonClicked(self, event):
         if self.record_data:
-            self.record_data_button.SetBackgroundColour(wx.NamedColor("RED"))
-            #self.record_data_button.SetForegroundColour(wx.NamedColor("RED"))
+            self.record_data_button.SetBackgroundColour(wx.NamedColour("RED"))
+            #self.record_data_button.SetForegroundColour(wx.NamedColour("RED"))
             self.record_data = False
             self.results.record = False
         else:
-            self.record_data_button.SetBackgroundColour(wx.NamedColor("GREEN"))
-            #self.record_data_button.SetForegroundColour(wx.NamedColor("GREEN"))
+            self.record_data_button.SetBackgroundColour(wx.NamedColour("GREEN"))
+            #self.record_data_button.SetForegroundColour(wx.NamedColour("GREEN"))
             self.record_data = True
             self.results.record = True
 
@@ -3559,7 +3562,7 @@ class ImgAppAui(wx.App):
     #    #TODO: share following code with OnReloadEvent ?
     #    self.results.AppendRows()
     #    self.UpdateResults()
-    #    self.savebutton.SetBackgroundColour(wx.NamedColor("RED"))
+    #    self.savebutton.SetBackgroundColour(wx.NamedColour("RED"))
 
 
     def OnChangeMeasurementName(self, event):
@@ -3629,7 +3632,7 @@ class ImgAppAui(wx.App):
         """create plotpanel, add to AUI Manager, establish connections
         for automatic updates, store it."""
 
-        plotpanel = DataPanel.DataPlotPanel(self.frame, measurement_name)
+        plotpanel = DataPanel.DataPlotPanel(self.frame, self.gridpanel, measurement_name)
         self.mgr.AddPane(plotpanel,
                          wx.aui.AuiPaneInfo()
                          .Name(panelname)

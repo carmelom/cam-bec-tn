@@ -27,6 +27,9 @@ bitmappath = os.path.join(basedir, 'bitmaps')
 #directory to store template files
 templatedir = os.path.join(basedir, 'templates')
 
+#columns data file
+columnsDataPanelFile = os.path.join(basedir, "columnsDataPanel.txt")
+
 ##acquire
 useTheta = True
 useBluefox = True
