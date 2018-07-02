@@ -30,6 +30,8 @@ from numpy import ma
 import wx, wx.aui, wx.grid
 import wx.lib.delayedresult as delayedresult
 
+if not wx.version()[:3] == "3.0":  
+    raise Exception("Version of wx should be 3.0. WxPython 2.8 and 4.0 are not compatible")
 
 from matplotlib.widgets import Button#, Cursor 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
@@ -1135,10 +1137,8 @@ class ImgAppAui(wx.App):
     except NameError:
         watchedfiles = [self.imagefilename]
     
-    # TODO: Deprecated?
-    rawimg1filename = settings.rawimage1file
-    rawimg2filename = settings.rawimage2file
-    rawimg3filename = settings.rawimage3file
+    rawimagefiles = [os.path.abspath(f) for f in settings.rawimagefiles if os.path.exists(f)]
+
     autosave_abs = False
     autosave_raw = False
 
@@ -1150,6 +1150,7 @@ class ImgAppAui(wx.App):
 
     imaging_parlist = [{'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsCMOS()},
                        {'K': imagingpars.ImagingParsHorizontalHRNa(), 'Na': imagingpars.ImagingParsCMOS()},
+                       {'K': imagingpars.ImagingParsHorizontalHRNa() , 'Na': imagingpars.ImagingParsAxialNa()},
 
                        {'K': imagingpars.ImagingParsAxialNa(), 'Na': imagingpars.ImagingParsHorizontalNa()},
                        {'Na': imagingpars.ImagingParsAxialNa(), 'K': imagingpars.ImagingParsHorizontalNa()},
@@ -2169,47 +2170,47 @@ class ImgAppAui(wx.App):
         self.Na.save_bitmap(imagesavefilenamefull1,pylab.get_cmap(self.imaging_pars['Na'].palette))
             
     def OnSaveImageEvent(self, event):
-        imagesavedir = self.get_data_dir(subdir = 'images')
+        statusbar_msg = "Saving images: "
+        
         ts_full = time.strftime("%Y-%m-%d-T%H%M%S")
         ts_time = time.strftime("%H:%M:%S")
         imagesavefilename = "%s-%s-%04d.sis" % (ts_full,
                                              self.results.name,
                                              self.results.active_row)
-        rawimg1savefilename = "r1-" + imagesavefilename
-        rawimg2savefilename = "r2-" + imagesavefilename
-        rawimg3savefilename = "r3-" + imagesavefilename
+        
+        if self.autosave_abs:
+            statusbar_msg = statusbar_msg + imagesavefilename
+            imagesavedir = self.get_data_dir(subdir = 'images')
+            imagesavefilenamefull = os.path.normpath(os.path.join(imagesavedir, imagesavefilename))
+            
+            #test if file already exists
+            if os.access(imagesavefilenamefull, os.F_OK):
+                MB = wx.MessageDialog(self.frame,
+                                      "Image file " + imagesavefilename + 
+                                      " already exists. \nDo you want to overwrite it?",
+                                      caption="Save Image File ...",
+                                      style=wx.YES_NO | wx.ICON_EXCLAMATION,
 
-        imagesavefilenamefull = os.path.normpath(os.path.join(imagesavedir, imagesavefilename))
-        rawimg1savefilenamefull = os.path.normpath(os.path.join(imagesavedir, rawimg1savefilename))
-        rawimg2savefilenamefull = os.path.normpath(os.path.join(imagesavedir, rawimg2savefilename))
-        rawimg3savefilenamefull = os.path.normpath(os.path.join(imagesavedir, rawimg3savefilename))
-
-        #test if file already exists
-        if os.access(imagesavefilenamefull, os.F_OK):
-            MB = wx.MessageDialog(self.frame,
-                                  "Image file " + imagesavefilename + 
-                                  " already exists. \nDo you want to overwrite it?",
-                                  caption="Save Image File ...",
-                                  style=wx.YES_NO | wx.ICON_EXCLAMATION,
-
-                                  )
-            answer = MB.ShowModal()
-            MB.Destroy()
-            if  answer == wx.ID_YES:
-                pass
-            else:
-                print "image file not saved"
-                return
-                                
-        shutil.copy2(self.imagefilename, imagesavefilenamefull)
-        statusbar_msg = "image saved as: " + imagesavefilename
+                                      )
+                answer = MB.ShowModal()
+                MB.Destroy()
+                if  answer == wx.ID_YES:
+                    shutil.copy2(self.imagefilename, imagesavefilenamefull)
+                else:
+                    print "image file not saved"
+            
         if self.autosave_raw:   # save also raw images
-            statusbar_msg = statusbar_msg + "  (+ raw images as: r1-..., r2-..., r3-...)"
-            shutil.copy2(self.rawimg1filename, rawimg1savefilenamefull)
-            shutil.copy2(self.rawimg2filename, rawimg2savefilenamefull) 
-            shutil.copy2(self.rawimg3filename, rawimg3savefilenamefull)
+            statusbar_msg = statusbar_msg + " + raw images"
+            rawsavedir = self.get_data_dir(subdir = 'raw')
+            for rawfile in self.rawimagefiles:
+                _, rawfilename = os.path.split(rawfile)
+                statusbar_msg = statusbar_msg + " %s"%rawfilename
+                rawfilename = rawfilename.replace('_', '')
+                rawfilenamefull = imagesavefilename.replace('.sis', '-'+rawfilename)
+                rawsavefilenamefull = os.path.normpath(os.path.join(rawsavedir, rawfilenamefull))
+                shutil.copy2(rawfile, rawsavefilenamefull)
 
-        self.savebutton.SetBackgroundColour(wx.NamedColor("GREEN"))
+        self.savebutton.SetBackgroundColour(wx.NamedColour("GREEN"))
         self.savebutton.Refresh()
 
         #self.saved_image_name.SetLabel(imagesavefilename)
@@ -3367,7 +3368,7 @@ class ImgAppAui(wx.App):
             
         self.results.activate() #activate results table on reload
         self.load_image(filename, event.target)
-        self.savebutton.SetBackgroundColour(wx.NamedColor("RED"))
+        self.savebutton.SetBackgroundColour(wx.NamedColour("RED"))
         self.savebutton.Refresh() #necessary?
         
         #self.saved_image_name.SetLabel('image not saved') #TODO: ??
@@ -3436,13 +3437,13 @@ class ImgAppAui(wx.App):
 
     def OnRecordDataButtonClicked(self, event):
         if self.record_data:
-            self.record_data_button.SetBackgroundColour(wx.NamedColor("RED"))
-            #self.record_data_button.SetForegroundColour(wx.NamedColor("RED"))
+            self.record_data_button.SetBackgroundColour(wx.NamedColour("RED"))
+            #self.record_data_button.SetForegroundColour(wx.NamedColour("RED"))
             self.record_data = False
             self.results.record = False
         else:
-            self.record_data_button.SetBackgroundColour(wx.NamedColor("GREEN"))
-            #self.record_data_button.SetForegroundColour(wx.NamedColor("GREEN"))
+            self.record_data_button.SetBackgroundColour(wx.NamedColour("GREEN"))
+            #self.record_data_button.SetForegroundColour(wx.NamedColour("GREEN"))
             self.record_data = True
             self.results.record = True
 
@@ -3559,7 +3560,7 @@ class ImgAppAui(wx.App):
     #    #TODO: share following code with OnReloadEvent ?
     #    self.results.AppendRows()
     #    self.UpdateResults()
-    #    self.savebutton.SetBackgroundColour(wx.NamedColor("RED"))
+    #    self.savebutton.SetBackgroundColour(wx.NamedColour("RED"))
 
 
     def OnChangeMeasurementName(self, event):
@@ -3629,7 +3630,7 @@ class ImgAppAui(wx.App):
         """create plotpanel, add to AUI Manager, establish connections
         for automatic updates, store it."""
 
-        plotpanel = DataPanel.DataPlotPanel(self.frame, measurement_name)
+        plotpanel = DataPanel.DataPlotPanel(self.frame, self.gridpanel, measurement_name)
         self.mgr.AddPane(plotpanel,
                          wx.aui.AuiPaneInfo()
                          .Name(panelname)

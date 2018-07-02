@@ -8,4 +8,7 @@ dynamic_expressions = (
     '(N0_K-N1_K)/N0_K',
     'N_Na *1e-3* (1 + (2*20/9.7946)**2)',
     "np.sum(np.array(Timestamp.split(':'), dtype=float)*np.array([1,60,3600]))",
+    "0.5e-6*(sx_K**2 + sy_K**2)",     # avg s^2 [mm]
+    "2.78e-9*(2*np.pi*8.87*sx_K)**2", #Temperature in situ from sx [uK]
+    "2.78e-9*(2*np.pi*86.7*sy_K)**2"  #Temperature in situ from sy [uK]
     )

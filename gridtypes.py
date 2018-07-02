@@ -150,7 +150,7 @@ class BoolEditor(wx.grid.PyGridCellEditor):
         self.checkbox.Value = self.startValue
         self.checkbox.SetFocus()
 
-    def EndEdit(self, row, col, grid):
+    def EndEdit(self, row, col, grid, oldval):
         value = self.checkbox.Value
         grid.Table.SetValue(row, col, value)
         return True

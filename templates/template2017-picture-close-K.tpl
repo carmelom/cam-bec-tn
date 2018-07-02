@@ -1,7 +1,7 @@
 (dp0
 S'name'
 p1
-VGM-Bcomp-after-realign
+S'results'
 p2
 sS'colsize'
 p3
@@ -161,7 +161,7 @@ p55
 I50
 sS'dynamic 2'
 p56
-I73
+I50
 sS'dynamic 3'
 p57
 I50
@@ -411,20 +411,18 @@ I50
 ssS'dynamic_expressions'
 p139
 (lp140
-S'1e-6*(sx_K**2 + sy_K**2)/2'
+V1e-6*(sx_K**2 + sy_K**2)/2
 p141
-aS'N_K *1e-3* (1 + (2*20/9.7946)**2)'
+aVN_K *1e-3* (1 + (2*20/9.7946)**2)
 p142
 aS'user**2'
 p143
-aS'N_K *1e-3* (1 + (2*20/9.7946)**2)'
+aV
 p144
 asS'colsel'
 p145
 (lp146
 g35
-ag80
-ag137
 ag13
 ag48
 ag26
@@ -448,13 +446,13 @@ asS'column_labels_custom'
 p147
 (dp148
 g106
-S'bz'
+Vtype
 p149
 sg108
-S'bx'
+Vbx
 p150
 sg109
-S'by'
+S'loading'
 p151
 sg9
 S'avg s^2'
@@ -463,7 +461,7 @@ sg75
 S'tof'
 p153
 sg56
-S'N_K true (M)'
+VN_Na true (M)
 p154
 sg57
 S'tof^2'
@@ -478,11 +476,11 @@ g9
 asS'X'
 p160
 (lp161
-g109
+g108
 asS'Y2'
 p162
 (lp163
-g48
+g56
 asS'G'
 p164
 (lp165
