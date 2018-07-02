@@ -11,9 +11,9 @@ watchedfiles = [os.path.join(imgfold, f) for f in ['test_0.sis',#]
                                                    'test_1.sis']
                                                     ]
 
-rawimage1file = imagefile
-rawimage2file = imagefile
-rawimage3file = imagefile
+rawimagefiles = [os.path.join(imgfold, f) for f in ['raw_0.sis',#]
+                                                    'raw_1.sis']
+                                                    ]
 
 referencefile = r"c:/SIScam/SIScamProgram/Prog/img/reference.sis"
 
