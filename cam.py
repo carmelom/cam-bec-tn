@@ -1139,6 +1139,8 @@ class ImgAppAui(wx.App):
     
     rawimagefiles = [os.path.abspath(f) for f in settings.rawimagefiles if os.path.exists(f)]
 
+    current_variables_files = [os.path.abspath(f) for f in settings.current_variables_files]
+    
     autosave_abs = False
     autosave_raw = False
 
@@ -1149,6 +1151,7 @@ class ImgAppAui(wx.App):
 
 
     imaging_parlist = [{'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsCMOS()},
+                       {'K': imagingpars.ImagingParsHorizontalNa(), 'Na': imagingpars.ImagingParsHorizontalHRNa()},
                        {'K': imagingpars.ImagingParsHorizontalHRNa(), 'Na': imagingpars.ImagingParsCMOS()},
                        {'K': imagingpars.ImagingParsHorizontalHRNa() , 'Na': imagingpars.ImagingParsAxialNa()},
 
@@ -2173,10 +2176,15 @@ class ImgAppAui(wx.App):
         statusbar_msg = "Saving images: "
         
         ts_full = time.strftime("%Y-%m-%d-T%H%M%S")
+        ts_date = time.strftime("%Y-%m-%d")
         ts_time = time.strftime("%H:%M:%S")
-        imagesavefilename = "%s-%s-%04d.sis" % (ts_full,
-                                             self.results.name,
-                                             self.results.active_row)
+        # imagesavefilename = "%s-%s-%04d.sis" % (ts_full,
+                                             # self.results.name,
+                                             # self.results.active_row)
+        imagesavefilename = "%s-%s-%04d.sis" % (ts_date,
+                                                self.results.name,
+                                                self.results.active_row)
+ 
         
         if self.autosave_abs:
             statusbar_msg = statusbar_msg + imagesavefilename
@@ -2198,7 +2206,9 @@ class ImgAppAui(wx.App):
                     shutil.copy2(self.imagefilename, imagesavefilenamefull)
                 else:
                     print "image file not saved"
-            
+            else:
+                shutil.copy2(self.imagefilename, imagesavefilenamefull)
+                
         if self.autosave_raw:   # save also raw images
             statusbar_msg = statusbar_msg + " + raw images"
             rawsavedir = self.get_data_dir(subdir = 'raw')
@@ -2218,7 +2228,7 @@ class ImgAppAui(wx.App):
         self.UpdateResultsFilename(imagesavefilename)
         # added timestamp
         self.UpdateResultsTimestamp(ts_time)
-
+        
     def OnInit(self):
         ## create main frame
 
@@ -2754,7 +2764,13 @@ class ImgAppAui(wx.App):
         # Added when changing filewatch
         self.FileWatcher = filewatch.FileChangeNotifier(self.watchedfiles,
                                                         self.ConcatenateSis)
-
+                                                        
+        # variables filewatch
+        # print(self.current_variables_files)
+        self.VariablesFileWatcher = filewatch.FileChangeNotifier(self.current_variables_files,
+                                                                 self.UpdateNextUserVariables)                                                
+        self.VariablesFileWatcher.setEnabled(True)
+        
         # Record data
         self.record_data_button = wx.Button(self.tb, self.ID_RecordData,
                                      "Record Data", size=(100, 30)
@@ -3350,6 +3366,9 @@ class ImgAppAui(wx.App):
     def UpdateResultsTimestamp(self, timestamp):
         """Update entry filename in results (after saving or reloading from file)"""
         self.results.UpdateTimestamp(timestamp)
+        
+    def UpdateNextUserVariables(self):
+        self.results.UpdateNextUserVariables()
 
     def OnReloadEvent(self, event):
         """Reload image. load image (default location if

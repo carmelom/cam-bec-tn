@@ -127,7 +127,7 @@ class FitManager():
                 fit['fctNum'] = fct
                 fit['fitParamsNum'] = popt
                 fit['fitParams'] = ''.join(["%.3e, "%p for p in popt])
-                fit['errorsParamsNum'] = np.diag(mcov)
+                fit['errorsParamsNum'] = np.sqrt(np.diag(mcov))
                 fit['errorsParams'] = ''.join(["%.2e, "%e for e in self.fits[nameFit]['errorsParamsNum']])
                 fit['xdata'] = xdata
                 

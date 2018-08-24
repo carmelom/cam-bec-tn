@@ -47,10 +47,11 @@ class ImagingParsCMOS(ImagingPars):
     mass = 23.0 * 1.66054e-27
     #palette = pylab.cm.gist_stern
     palette = "gist_stern"
+	#ODmax_smooth = 20
         
 class ImagingParsVerticalNa(ImagingPars):
     description = "vertical-Na"
-    pixelsize = 4.40/0.5#0.972  #pixelsize in µm x imaging magnification
+    pixelsize = 4.40/0.50 #0.972  #pixelsize in µm x imaging magnification
     sigma0 = 1.5/3.14*(589e-9)**2
     mass = 23.0 * 1.66054e-27
     #palette = pylab.cm.gist_stern
@@ -65,13 +66,13 @@ class ImagingParsAxialNa(ImagingPars):
     #palette = pylab.cm.gist_stern
     palette = "gist_stern"
     
-class ImagingParsAxialHRNa(ImagingPars):
-    description = "axialHR-Na"
-    pixelsize = 4.40/1.99 #0.972  #pixelsize in µm x imaging magnification
-    sigma0 = 1.5/3.14*(589e-9)**2
-    mass = 23.0 * 1.66054e-27
-    #palette = pylab.cm.gist_stern
-    palette = "gist_stern"
+# class ImagingParsAxialHRNa(ImagingPars):
+    # description = "axialHR-Na"
+    # pixelsize = 4.40/1.99 #0.972  #pixelsize in µm x imaging magnification
+    # sigma0 = 1.5/3.14*(589e-9)**2
+    # mass = 23.0 * 1.66054e-27
+    # # palette = pylab.cm.gist_stern
+    # palette = "gist_stern"
 
 
     

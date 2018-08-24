@@ -1,7 +1,7 @@
 (dp0
 S'name'
 p1
-S'results'
+Veos-bec-true-2-temperature
 p2
 sS'colsize'
 p3
@@ -413,17 +413,19 @@ p139
 (lp140
 V1e-6*(sx_K**2 + sy_K**2)/2
 p141
-aVN_K *1e-3* (1 + (2*20/9.7946)**2)
+aVN_Na *1e-3* (1 + (2*20/9.7946)**2)
 p142
 aS'user**2'
 p143
-aV
+aVN_K *1e-3* (1 + (2*20/9.7946)**2)
 p144
 asS'colsel'
 p145
 (lp146
 g35
 ag13
+ag132
+ag14
 ag48
 ag26
 ag63
@@ -449,7 +451,7 @@ g106
 Vtype
 p149
 sg108
-Vbx
+Vtype
 p150
 sg109
 S'loading'
@@ -476,12 +478,11 @@ g9
 asS'X'
 p160
 (lp161
-g108
+g57
 asS'Y2'
 p162
 (lp163
-g56
-asS'G'
+sS'G'
 p164
 (lp165
 ss.

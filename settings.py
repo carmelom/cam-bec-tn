@@ -7,13 +7,19 @@ basedir = r"c:/SIScam/SIScamProgram/Prog"
 #full path to image file
 imgfold = r"c:/SIScam/SIScamProgram/Prog/img"
 imagefile = os.path.join(imgfold, "test.sis")
-watchedfiles = [os.path.join(imgfold, f) for f in ['test_0.sis',#]
-                                                   'test_1.sis']
-                                                    ]
+watchedfiles = [os.path.join(imgfold, f) for f in ['test_0.sis',#]]
+                                                   'test_1.sis',]]
+                                                   #]
+                                                   # ]
 
-rawimagefiles = [os.path.join(imgfold, f) for f in ['raw_0.sis',#]
-                                                    'raw_1.sis']
-                                                    ]
+rawimagefiles = [f.replace('test', 'raw') for f in watchedfiles]
+
+# even if one single file, this must be a list as well
+current_variables_files = [os.path.join(imgfold, 'current-variables.txt')]
+
+#rawimagefiles = [os.path.join(imgfold, f) for f in ['raw_0.sis',#]
+#                                                    'raw_1.sis']
+#                                                    ]
 
 referencefile = r"c:/SIScam/SIScamProgram/Prog/img/reference.sis"
 

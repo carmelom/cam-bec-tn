@@ -8,10 +8,11 @@ import wx
 import wx.grid
 import wx.aui
 
+import json
 import numpy
 
 from observer import Subject, changes_state
-from settings import columnsDataPanelFile
+from settings import columnsDataPanelFile, current_variables_files
 import gridtypes
 import dynamic_expressions
 
@@ -363,7 +364,6 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
         """Update filename entry"""
         if not self.active:
             return
-        
         row = self.active_row
         col = self.colname_to_raw('Filename')
         self.SetValueRaw(row, col, filename)
@@ -373,12 +373,29 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
         """Update filename entry"""
         if not self.active:
             return
-        
         row = self.active_row
         col = self.colname_to_raw('Timestamp')
         self.SetValueRaw(row, col, timestamp)
         self.GetView().Refresh()
-
+        
+    def UpdateNextUserVariables(self,):
+        if not self.active:
+            return
+        row = self.next_active_row
+        #row = self.active_row
+        for file in current_variables_files:
+            print('opening %s'%file)
+            with open(file, 'rb') as f:
+                vars = json.load(f)
+            for key, value in vars.items():
+                try:
+                    col = self.column_labels_custom.keys()[self.column_labels_custom.values().index(key)]
+                    self.SetValueRaw(row, col, value)
+                except ValueError as e:
+                    print(e)
+                    pass
+        self.GetView().Refresh()
+        
     def DeleteCols(self, pos=0, numcols=1):
         pass
 
@@ -627,7 +644,10 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
     def active_row(self):
         row = max(0, self.GetNumberRows() - 3)
         return row
-
+    @property
+    def next_active_row(self):
+        return self.active_row + 1
+        
     #@changes_state
     def activate(self, status = True):
         self.active = status
