@@ -2,6 +2,9 @@
 #-*- coding: latin-1 -*-
 """Contains imaging parameters like effective pixelsize, absorption
 coefficient, ..."""
+
+from numpy import pi
+
 class ImagingPars(object):
     """Base class for parameters of imaging system.
 
@@ -16,6 +19,8 @@ class ImagingPars(object):
     mass = 0
     ODmax = 0 #maximum optical density
     ODmax_smooth = 10
+    omega_trap_x = 2*pi * 8.89
+    omega_trap_y = 2*pi * 34.4
 
     def __str__(self):
         s = "%s, t_exp = %.1fms, OD_max = %.1f"%(

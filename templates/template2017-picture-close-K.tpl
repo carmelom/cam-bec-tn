@@ -1,7 +1,7 @@
 (dp0
 S'name'
 p1
-Veos-bec-true-2-temperature
+S'results'
 p2
 sS'colsize'
 p3
@@ -413,7 +413,7 @@ p139
 (lp140
 V1e-6*(sx_K**2 + sy_K**2)/2
 p141
-aVN_Na *1e-3* (1 + (2*20/9.7946)**2)
+aVN_K *1e-3* (1 + (2*20/9.7946)**2)
 p142
 aS'user**2'
 p143

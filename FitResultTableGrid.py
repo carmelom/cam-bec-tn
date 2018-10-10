@@ -679,7 +679,7 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
                     # fm 2010-01-05: modified to include numpy functions
                     # result = eval(expression, valuedict)
                     tmpdict={'res':0.}
-                    exec('import numpy as np; res =' + expression, valuedict, tmpdict)
+                    exec('import numpy as np; import re; res =' + expression, valuedict, tmpdict)
                     result = tmpdict['res']
                 except StandardError:
                     # print "Error evaluation expression", expression

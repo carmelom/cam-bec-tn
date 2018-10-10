@@ -1378,14 +1378,15 @@ class GaussBose2d(Gauss2d):
                         full_output = True)
                     #TODO: check for fit succeed
         r,c,F = self.fJr(p,x,y,imgroi, calcJ = False)
-        fitpar = numpy.array([c[0], p[0], p[1], p[2], p[3], c[1]])
+        fitpar = numpy.array([c[0], p[0], p[1], p[2], p[3], c[1], 
+                              0]) # angle is not fitted
         
         Jfull = numpy.vstack((F, J))
         cepe, sigma = LM.fitparerror( numpy.hstack((c, p)), Jfull, r)
         ce, pe = cepe[:2], cepe[2:]
         fitparerr = numpy.array([ce[0],
                                  pe[0], pe[1], pe[2], pe[3],
-                                 ce[1]])
+                                 ce[1], 0])
 
         imgfit = self.gaussbose2d(fitpar, x, y)
 
@@ -4914,12 +4915,17 @@ class FitParsGauss2d(FitPars):
     @property
     def T(self):
         "temperature of cloud in uK"
-        if self.imaging_pars.expansion_time:
-            return 0.5*((self.sx*1e-6)**2 + (self.sy*1e-6)**2) / \
-                   (self.imaging_pars.expansion_time*1e-3)**2 * \
-                   self.imaging_pars.mass / 1.38065e-23 * 1e6
-        else:
-            return 0.0
+        # if self.imaging_pars.expansion_time:
+            # return 0.5*((self.sx*1e-6)**2 + (self.sy*1e-6)**2) / \
+                   # (self.imaging_pars.expansion_time*1e-3)**2 * \
+                   # self.imaging_pars.mass / 1.38065e-23 * 1e6
+        tau_x = self.imaging_pars.omega_trap_x * self.imaging_pars.expansion_time*1e-3
+        tau_y = self.imaging_pars.omega_trap_y * self.imaging_pars.expansion_time*1e-3
+        Tx = self.imaging_pars.mass/1.38065e-23 * (self.imaging_pars.omega_trap_x * self.sx*1e-6)**2 / (1 + tau_x**2) * 1e6
+        Ty = self.imaging_pars.mass/1.38065e-23 * (self.imaging_pars.omega_trap_y * self.sy*1e-6)**2 / (1 + tau_y**2) * 1e6
+        return 2*tau_y**2/(1 + 3*tau_y**2) * Tx + (1 + tau_y**2)/(1 + 3*tau_y**2) * Ty
+        # else:
+            # return 0.0
 
     @property
     def Terr(self):
