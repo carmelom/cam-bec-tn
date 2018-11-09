@@ -17,6 +17,8 @@ import numpy
 import scipy.special
 from scipy.ndimage import gaussian_filter
 
+from scipy.constants import hbar, Boltzmann as kB
+
 import LM
 reload(LM)
 
@@ -4817,15 +4819,15 @@ class FitParsGauss2d(FitPars):
                    'sy', 'syerr', 
                    'mx', 'mxerr', 
                    'my', 'myerr', 
-                   'T', 
-                   'N', 'Nth', 'Nerr', 
+                   'T', 'Tc',
+                   'N', 'Nth', 'Nerr',
                    'sigma',
                    'angle',
                    ]
     fitparunits = ['', ''
                    'um', 'um', 'um', 'um', 
                    'px', 'px', 'px', 'px', 
-                   'uK', 
+                   'uK', 'uK',
                    'K', 'K', 'K',
                    '',
                    '',
@@ -4921,8 +4923,8 @@ class FitParsGauss2d(FitPars):
                    # self.imaging_pars.mass / 1.38065e-23 * 1e6
         tau_x = self.imaging_pars.omega_trap_x * self.imaging_pars.expansion_time*1e-3
         tau_y = self.imaging_pars.omega_trap_y * self.imaging_pars.expansion_time*1e-3
-        Tx = self.imaging_pars.mass/1.38065e-23 * (self.imaging_pars.omega_trap_x * self.sx*1e-6)**2 / (1 + tau_x**2) * 1e6
-        Ty = self.imaging_pars.mass/1.38065e-23 * (self.imaging_pars.omega_trap_y * self.sy*1e-6)**2 / (1 + tau_y**2) * 1e6
+        Tx = self.imaging_pars.mass/kB * (self.imaging_pars.omega_trap_x * self.sx*1e-6)**2 / (1 + tau_x**2) * 1e6
+        Ty = self.imaging_pars.mass/kB * (self.imaging_pars.omega_trap_y * self.sy*1e-6)**2 / (1 + tau_y**2) * 1e6
         return 2*tau_y**2/(1 + 3*tau_y**2) * Tx + (1 + tau_y**2)/(1 + 3*tau_y**2) * Ty
         # else:
             # return 0.0
@@ -4932,9 +4934,17 @@ class FitParsGauss2d(FitPars):
         if self.imaging_pars.expansion_time:
             return numpy.sqrt( (self.sx*self.syerr)**2 + (self.sxerr*self.sy)**2 ) / \
                    (self.imaging_pars.expansion_time*1e-3)**2 * \
-                   self.imaging_pars.mass / 1.38065e-23 * 1e6 * 1e-12
+                   self.imaging_pars.mass / kB * 1e6 * 1e-12
         else:
             return 0.0
+    
+    @property
+    def Tc(self):
+        z3 = 1.20205
+        omega_ho = (self.imaging_pars.omega_trap_x * self.imaging_pars.omega_trap_y**2)**(1./3)
+        Tc = hbar*omega_ho/kB * (self.N/z3)**(1./3) * 1e6
+        return Tc
+        
         
     def __str__(self):
         s = u"OD: %6.2f\n" \
@@ -4952,7 +4962,8 @@ class FitParsGauss2d(FitPars):
             u"T : %5.3f uK\n" \
             u"   ±%5.3f\n" \
             u"N : %5.1f k\n" \
-            u"    ±%3.2f" \
+            u"    ±%3.2f\n" \
+            u"Tc : %5.3f uK\n" \
             %(self.OD, self.ODerr,
               self.mx, self.mxerr,
               self.my, self.myerr,
@@ -4960,7 +4971,8 @@ class FitParsGauss2d(FitPars):
               self.sx, self.sxerr,
               self.sy, self.syerr,
               self.T, self.Terr,
-              self.N, self.Nerr)
+              self.N, self.Nerr,
+              self.Tc)
         return s
 
 class FitParsGaussBose2d(FitParsGauss2d):
@@ -5011,16 +5023,16 @@ class FitParsBimodal2d(FitParsGauss2d):
                    'my', 'myerr', 
                    'rx', 'rxerr', 
                    'ry', 'ryerr', 
-                   'N', 'Nth', 'Nbec', 
-                   'T',
+                   'N', 'Nth', 'Nbec', 'N0',
+                   'T', 'Tc',
                    'OD',
                    'sigma']
 
     fitparunits = ['um', 'um', 'um', 'um', 
                    'px', 'px', 'px', 'px',
                    'um', 'um', 'um', 'um', 
-                   '10^3', '10^3', '10^3',
-                   'uK',
+                   '10^3', '10^3', '10^3', '10^3',
+                   'uK', 'uK',
                    '',
                    '',]
 
@@ -5046,7 +5058,7 @@ class FitParsBimodal2d(FitParsGauss2d):
         Nbec = 1e-3*1.25* \
                self.B * self.rx*1e-6 * self.ry*1e-6 / self.imaging_pars.sigma0 
         return Nbec
-
+    
     @property
     def OD(self):
         "optical density"
@@ -5082,14 +5094,16 @@ class FitParsBimodal2d(FitParsGauss2d):
             u"sxy:%3.0f/%3.0f um\n   ±%3.1f/%3.1f\n" \
             u"rxy:%3.0f/%3.0f um\n   ±%3.1f/%3.1f\n" \
             u"Tth:%5.3f uK\n   ±%5.3f\n"\
-            u"Nsb:%3.0f/%3.0f K" \
+            u"Nsb:%3.0f/%3.0f K\n" \
+            u"Tc : %5.3f uK\n" \
             %(self.A, self.B, self.Aerr, self.Berr,
               self.mx, self.my, self.mxerr, self.myerr,
               self.sx, self.sy, self.sxerr, self.syerr,
               self.rx, self.ry, self.rxerr, self.ryerr,
               self.T, self.Terr,
               self.N,
-              self.Nbec)
+              self.Nbec,
+              self.Tc)
         return s
 
 class FitParsBimodal2dSplit(FitParsGauss2d):

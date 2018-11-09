@@ -8,7 +8,7 @@ basedir = r"c:/SIScam/SIScamProgram/Prog"
 imgfold = r"c:/SIScam/SIScamProgram/Prog/img"
 imagefile = os.path.join(imgfold, "test.sis")
 watchedfiles = [os.path.join(imgfold, f) for f in [
-                                                    #'test_0.sis',
+                                                    'test_0.sis',
                                                     'test_1.sis',
 ]]
 

@@ -442,11 +442,13 @@ class ImgPanel(wx.Panel):
                                     )
         
         #initialize image area
-        
-        self.himg = self.aximg.imshow(img, cmap=palette, vmin= - 0.05, vmax=1.5,
+        self.imshow_kwargs = dict(cmap=palette, vmin= - 0.05, vmax=1.5,
                                       origin="upper",
-                                      interpolation='bicubic' #'nearest', 'spline36'
+                                      interpolation='bicubic', #'nearest', 'spline36'
+                                      aspect=1
                                       )
+        
+        self.himg = self.aximg.imshow(img, **self.imshow_kwargs)
         
         self.aximg.set_axis_off()
         self.hclrbr = pylab.colorbar(self.himg, self.axclrb)
@@ -768,7 +770,11 @@ class ImgPanel(wx.Panel):
         self.bec_residuals = None
         self.clear_contours()
         self.create_image()
+        extent = (0, self.img.shape[1], self.img.shape[0], 0)
         self.himg.set_data(self.img)
+        self.himg.set_extent(extent)
+        ## self.himg = self.aximg.imshow(self.img, **self.imshow_kwargs)
+        print '### panel %s reloaded im with size %r'%(self.id, self.img.shape)
         self.redraw()
         
         self.fit.rotation_active=self.rotation_active
@@ -840,6 +846,7 @@ class ImgPanel(wx.Panel):
         ODmax = self.fit.imaging_pars.ODmax #TODO: this might fail if
                                             #fit class is changed.
         if ODmax > 0:
+            print 'Cutting at ODmax %.2f'%ODmax
             #img = numpy.log((1 - numpy.exp(- ODmax)) / (numpy.exp(- img) - numpy.exp(- ODmax)))
             smooth = self.fit.imaging_pars.ODmax_smooth
             # maskk = numpy.bitwise_and(scipy.ndimage.filters.gaussian_filter(img, smooth) <= ODmax,
@@ -904,7 +911,9 @@ class ImgPanel(wx.Panel):
     #    self.imgfit, self.img_background, self.fitpars = self.fit.do_fit(self.img, self.roi)
 
     def update_image(self):
-        self.himg.set_data(self.create_bitmap())
+        bit = self.create_bitmap()
+        extent = (0, bit.shape[1], bit.shape[0], 0)
+        self.himg.set_data(bit)
 
                 
     def set_compensate_offset(self, value=True):

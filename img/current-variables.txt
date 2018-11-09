@@ -1,1 +1,1 @@
-{"tau": 30.0, "probe_det": 4.0, "series": 1.0}
+{"probe_det": 0, "probe_tau": 40.0}
