@@ -2181,7 +2181,7 @@ class ImgAppAui(wx.App):
         self.K.save_bitmap(imagesavefilenamefull0,pylab.get_cmap(self.imaging_pars['K'].palette))
         self.Na.save_bitmap(imagesavefilenamefull1,pylab.get_cmap(self.imaging_pars['Na'].palette))
             
-    def OnSaveImageEvent(self, event):
+    def OnSaveImageEvent(self, event, stamp=''):
         statusbar_msg = "Saving images: "
         
         ts_full = time.strftime("%Y-%m-%d-T%H%M%S")
@@ -3366,11 +3366,13 @@ class ImgAppAui(wx.App):
         
     def UpdateResults(self):
         self.results.UpdateResults({'K': self.K.fitpars, 'Na': self.Na.fitpars})
-
+        
+        
     def UpdateResultsFilename(self, filename):
         """Update entry filename in results (after saving or reloading from file)"""
         head, tail = os.path.split(filename)
         self.results.UpdateFilename(tail)
+        
         
     def UpdateResultsTimestamp(self, timestamp):
         """Update entry filename in results (after saving or reloading from file)"""

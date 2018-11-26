@@ -375,8 +375,11 @@ class FitResultDataTable(wx.grid.PyGridTableBase, Subject):
             return
         row = self.active_row
         col = self.colname_to_raw('Timestamp')
-        self.SetValueRaw(row, col, timestamp)
-        self.GetView().Refresh()
+        pvalue = self.GetValueRaw(row, col)
+        if not pvalue:
+            print('previous timestamp was ',pvalue,'; updating with ',timestamp)
+            self.SetValueRaw(row, col, timestamp)
+            self.GetView().Refresh()
         
     def UpdateNextUserVariables(self,):
         if not self.active:

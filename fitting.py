@@ -4942,7 +4942,7 @@ class FitParsGauss2d(FitPars):
     def Tc(self):
         z3 = 1.20205
         omega_ho = (self.imaging_pars.omega_trap_x * self.imaging_pars.omega_trap_y**2)**(1./3)
-        Tc = hbar*omega_ho/kB * (self.N/z3)**(1./3) * 1e6
+        Tc = hbar*omega_ho/kB * (self.N*1e3/z3)**(1./3) * 1e6
         return Tc
         
         
@@ -5023,7 +5023,7 @@ class FitParsBimodal2d(FitParsGauss2d):
                    'my', 'myerr', 
                    'rx', 'rxerr', 
                    'ry', 'ryerr', 
-                   'N', 'Nth', 'Nbec', 'N0',
+                   'N', 'Nth', 'Nbec', 
                    'T', 'Tc',
                    'OD',
                    'sigma']
@@ -5031,7 +5031,7 @@ class FitParsBimodal2d(FitParsGauss2d):
     fitparunits = ['um', 'um', 'um', 'um', 
                    'px', 'px', 'px', 'px',
                    'um', 'um', 'um', 'um', 
-                   '10^3', '10^3', '10^3', '10^3',
+                   '10^3', '10^3', '10^3',
                    'uK', 'uK',
                    '',
                    '',]
